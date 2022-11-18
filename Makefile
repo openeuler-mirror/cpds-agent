@@ -1,7 +1,4 @@
-CC=gcc
-INCLUDE=src/*.c
-TAGET=cpds-agent
 all:
-	$(CC) ${INCLUDE} -o ${TAGET} -lpthread
+	gcc src/*.c -o cpds-agent -lpthread
 clean:
-	-@rm -rf ${TAGET} >/dev/null 2>&1
+	-@rm -rf ${TARGET} >/dev/null 2>&1
