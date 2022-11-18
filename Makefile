@@ -1,4 +1,12 @@
+CC = gcc
+CP = cp
+LIBS = -lpthread 
+TARGET = cpds-agent
+FILEPATH = src/*.c
+COPYPATH = /usr/bin
 all:
-	gcc src/*.c -o cpds-agent -lpthread
+	$(CC) ${FILEPATH} -o ${TARGET} ${LIBS}
+install:
+	$(CP) ${TARGET} ${COPYPATH}
 clean:
 	-@rm -rf ${TARGET} >/dev/null 2>&1
