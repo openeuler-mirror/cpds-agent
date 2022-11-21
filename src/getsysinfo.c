@@ -13,12 +13,12 @@
 
 void* getSysinfo(void* arg)
 {
-
+    sys_t *sys = (sys_t *)arg;
 }
 
 void* pushSysinfo(void* arg)
 {
-
+    sys_t *sys = (sys_t *)arg;
 }
 
 int get_sysCpuUsage()
