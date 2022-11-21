@@ -6,21 +6,25 @@
 #include <string.h>
 #include <pthread.h>
 #include "monitor.h"
-struct sysinfo
-{
-    double CpuUsage;
-    float DiskUsage;
-    float IoWriteSize;
-};
 
 int main()
 {
-    struct sysinfo sys;
+    sys_t sys;
     int res;
-    pthread_t mythread1, mythread2;
+    pthread_t getinfo_tid, pushinfo_tid;
 
-    res = pthread_create(&mythread1, NULL, getSysinfo, &sys);
-    res = pthread_create(&mythread2, NULL, pushSysinfo, &sys);
+    res = pthread_create(&getinfo_tid, NULL, getSysinfo,(void *)&sys);
+    if (res != 0)
+    {
+       printf("线程创建失败");
+       return 0; 
+    }
+    res = pthread_create(&pushinfo_tid, NULL, pushSysinfo,(void *)&sys);
+    if( res != 0)
+    {
+       printf("线程创建失败");
+       return 0;
+    }
 
     return 0;
 }
