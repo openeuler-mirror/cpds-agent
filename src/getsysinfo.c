@@ -30,7 +30,6 @@ int get_sysCpuUsage()
     long int all1, all2, idle1, idle2;
     float usage;
 
-    //读取/proc/stat内容，返回给指针fp
     fp = fopen("/proc/stat", "r");
     if (fp == NULL)
     {
@@ -44,19 +43,17 @@ int get_sysCpuUsage()
         return -1;
     }
 
-    //将cpu指标之和赋值给all1：用户态时间+nice用户态时间+内核态时间+空闲时间+I/O等待时间+硬中断时间+软中断时间
+    //cpu名称、用户态时间、nice用户态时间、内核态时间、空闲时间、I/O等待时间、硬中断时间、软中断时间
     sscanf(buf, "%s%ld%ld%ld%ld%ld%ld%ld", cpu, &user, &nice, &sys, &idle, &iowait, &irq, &softirq);
     all1 = user + nice + sys + idle + iowait + irq + softirq;
     idle1 = idle;
 
-    //将文件指针、buf数组及相关变量还原为初始值
     rewind(fp);
     sleep(1);
     memset(buf, 0, sizeof(buf));
     cpu[0] = '\0';
     user = nice = sys = idle = iowait = irq = softirq = 0;
 
-    //重新获取fp中内容，重新将buf中值赋值给定义变量，将cpu指标和空间时间分别赋值给all2和idle2
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
         perror("fgets");
@@ -79,7 +76,6 @@ int get_sysDiskUsage()
     char filesystem[SYS_DISK_NAME_LEN], available[SYS_DISK_NAME_LEN], use[SYS_DISK_NAME_LEN], mounted[SYS_DISK_NAME_LEN], buf[SYS_DISK_BUFF_LEN];
     double used, blocks, used_rate;
 
-    //读取df命令输出结果返回给指针fp
     fp = popen("df", "r");
     if (fp = NULL)
     {
@@ -87,7 +83,6 @@ int get_sysDiskUsage()
         return -1;
     }
 
-    //将fp指针指向下一行
     fgets(buf, SYS_DISK_BUFF_LEN, fp);
     double dev_total = 0, dev_used = 0;
 
@@ -98,7 +93,6 @@ int get_sysDiskUsage()
         dev_used += used;
     }
 
-    //计算磁盘使用率
     used_rate = (dev_used / dev_total) * SYS_100_PERSENT;
 
     pclose(fp);
@@ -113,7 +107,6 @@ float get_sysIoWriteSize()
     char a[20];
     float arr[20];
 
-    //读取执行iostat -d -x命令的结果返回给指针*fp
     FILE *fp = popen(cmd, "r");
     if (!fp)
     {
@@ -127,7 +120,6 @@ float get_sysIoWriteSize()
     fgets(buffer, sizeof(buffer), fp);
     fgets(buffer, sizeof(buffer), fp);
 
-    //把iostat -d -x执行结果放入arr数组中，最后返回arr数组中的值
     sscanf(buffer, "%s %f %f %f %f %f %f %f %f %f %f %f %f %f ", a, &arr[0], &arr[1], &arr[2], &arr[3], &arr[4], &arr[5], &arr[6], &arr[7], &arr[8], &arr[9], &arr[10], &arr[11], &arr[12]);
 
     pclose(fp);
