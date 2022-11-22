@@ -21,7 +21,7 @@ void* pushSysinfo(void* arg)
     sys_t *sys = (sys_t *)arg;
 }
 
-int get_sysCpuUsage()
+float get_sysCpuUsage()
 {
     FILE *fp;
     char buf[128];
@@ -73,7 +73,7 @@ int get_sysCpuUsage()
     return usage;
 }
 
-int get_sysDiskUsage()
+double get_sysDiskUsage()
 {
     FILE *fp;
     char filesystem[SYS_DISK_NAME_LEN], available[SYS_DISK_NAME_LEN], use[SYS_DISK_NAME_LEN], mounted[SYS_DISK_NAME_LEN], buf[SYS_DISK_BUFF_LEN];
