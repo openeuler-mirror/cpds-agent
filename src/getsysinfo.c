@@ -41,6 +41,7 @@ int get_sysCpuUsage()
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
         perror("fgets");
+        fclose(fp);
         return -1;
     }
 
@@ -60,6 +61,7 @@ int get_sysCpuUsage()
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
         perror("fgets");
+        fclose(fp);
         return -1;
     }
     sscanf(buf, "%s%ld%ld%ld%ld%ld%ld%ld", cpu, &user, &nice, &sys, &idle, &iowait, &irq, &softirq);
@@ -81,7 +83,7 @@ int get_sysDiskUsage()
 
     //读取df命令输出结果返回给指针fp
     fp = popen("df", "r");
-    if (fp = NULL)
+    if (fp == NULL)
     {
         perror("popen error");
         return -1;
