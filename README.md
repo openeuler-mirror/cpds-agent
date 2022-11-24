@@ -15,6 +15,12 @@ cd cpds-agent
 make
 ```
 编译完成后生成`cpds-agent`
+#### 安装
+make编译过后执行make install命令安装
+```
+   make install
+   systemctl status cpds-agent查看服务状态
+```
 #### 参与贡献
 1.  Fork 本仓库
 2.  新建 Feat_xxx 分支
