@@ -1,0 +1,11 @@
+[Unit]
+Description=Provide Sysinfo
+
+[Service]
+ExecStart=/usr/bin/cpds-agent
+Type=simple
+Restart=on-failure
+RestartSec=30s
+
+[Install]
+WantedBy=multi-user.target
