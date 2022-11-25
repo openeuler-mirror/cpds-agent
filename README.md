@@ -21,6 +21,8 @@ make编译过后执行make install命令安装
    make install
    systemctl status cpds-agent查看服务状态
 ```
+#### 卸载
+执行make uninstall卸载已安装cpds-agent的环境
 #### 参与贡献
 1.  Fork 本仓库
 2.  新建 Feat_xxx 分支
