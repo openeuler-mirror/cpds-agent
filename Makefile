@@ -1,6 +1,7 @@
 CC = gcc
 CP = cp
-LIBS = -lpthread 
+LIBS = -lpthread -ldl -lm 
+LIBS += -Wl,-Bstatic -L"util/sqlite3" -lsqlite3 -Wl,-Bdynamic  
 TARGET = cpds-agent
 FILEPATH = src/*.c
 COPYPATH = /usr/bin
