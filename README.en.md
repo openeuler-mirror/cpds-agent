@@ -1,36 +1,23 @@
 # cpds-agent
 
-#### Description
+#### Introduce
 Collect Container info for Container Problem Detect System.
+Cpds-agent indicates CPDS(Container Problem Detect System)Information acquisition component of container fault detection system
 
-#### Software Architecture
-Software architecture description
+This component collects data required by cpds-detetor(exception detection component).
+#### Compiling from source
+`cpds-detector`only supported Linux。
+```bash
+cd $GOPATH/gitee.com/cpds
+git clone https://gitee.com/openeuler/cpds-agent.git
+cd cpds-agent
 
-#### Installation
+make
+```
+generate after compiling`cpds-agent`
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Instructions
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Contribution
-
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
-
-
-#### Gitee Feature
-
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+#### Participate in contribution
+1.  Fork this warehouse
+2.  New Feat_xxx branch
+3.  Submit code
+4.  New Pull Request
