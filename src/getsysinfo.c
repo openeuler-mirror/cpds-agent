@@ -5,9 +5,23 @@
 #include <pthread.h>
 #include "monitor.h"
 
+//TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
 {
     sys_t *sys = (sys_t *)arg;
+    int count = 5;
+    while (1)
+    {
+        sleep(1);
+        while (((sys->CpuUsage = get_sysCpuUsage()) < 0) || ((sys->DiskUsage = get_sysDiskUsage()) < 0) || ((sys->IoWriteSize = get_sysIoWriteSize() < 0)))
+        {
+            if (count == 0)
+            {
+                break;
+            }
+            count--;
+        }
+    }
 }
 
 void* pushSysinfo(void* arg)
