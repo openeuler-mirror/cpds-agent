@@ -42,14 +42,14 @@ float get_sysCpuUsage()
     if (fp == NULL)
     {
         perror("fopen error");
-        return -1;
+        return RESULT_FAILED;
     }
 
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
         perror("fgets");
         fclose(fp);
-        return -1;
+        return RESULT_FAILED;
     }
 
     //cpu名称、用户态时间、nice用户态时间、内核态时间、空闲时间、I/O等待时间、硬中断时间、软中断时间
@@ -67,7 +67,7 @@ float get_sysCpuUsage()
     {
         perror("fgets");
         fclose(fp);
-        return -1;
+        return RESULT_FAILED;
     }
     sscanf(buf, "%s%ld%ld%ld%ld%ld%ld%ld", cpu, &user, &nice, &sys, &idle, &iowait, &irq, &softirq);
     all2 = user + nice + sys + idle + iowait + irq + softirq;
@@ -90,7 +90,7 @@ double get_sysDiskUsage()
     if (fp == NULL)
     {
         perror("popen error");
-        return -1;
+        return RESULT_FAILED;
     }
 
     fgets(buf, SYS_DISK_BUFF_LEN, fp);
@@ -121,7 +121,7 @@ float get_sysIoWriteSize()
     if (!fp)
     {
         perror("popen error");
-        return -1;
+        return RESULT_FAILED;
     }
 
     //获取执行iostat命令第四行结果

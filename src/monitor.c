@@ -16,20 +16,20 @@ int main()
     if(sqlite3_open("test.db", &db) != SQLITE_OK)
     {
        printf("open db faild:%s", sqlite3_errmsg(db));
-       return -1; 
+       return RESULT_FAILED; 
     }
     res = pthread_create(&getinfo_tid, NULL, getSysinfo,(void *)&sys);
     if (res != 0)
     {
        printf("线程创建失败");
-       return 0; 
+       return RESULT_FAILED; 
     }
     res = pthread_create(&pushinfo_tid, NULL, pushSysinfo,(void *)&sys);
     if( res != 0)
     {
        printf("线程创建失败");
-       return 0;
+       return RESULT_FAILED;
     }
 
-    return 0;
+    return RESULT_SUCCESS;
 }
