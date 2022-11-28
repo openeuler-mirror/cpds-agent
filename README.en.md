@@ -15,7 +15,17 @@ cd cpds-agent
 make
 ```
 generate after compiling`cpds-agent`
-
+#### The installation
+make execute after compiling make install command installation
+```
+   make install
+   systemctl status cpds-agent 
+```
+#### Uninstall
+execute make uninstall uninstalling an installation cpds-agent the environment
+```
+    make uninstall
+```
 #### Participate in contribution
 1.  Fork this warehouse
 2.  New Feat_xxx branch
