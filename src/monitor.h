@@ -1,5 +1,6 @@
 #ifndef MONITOR_H
 #define MONITOR_H
+#include "../util/sqlite3/sqlite3.h"
 
 #define SYS_DISK_BUFF_LEN 256
 #define SYS_DISK_NAME_LEN 80
@@ -13,6 +14,7 @@ typedef struct sysinfo
     float IoWriteSize;
 }sys_t;
 
+int create_sysinfotable(sqlite3 *db);
 void* getSysinfo(void* arg);
 void* pushSysinfo(void* arg);
 float get_sysCpuUsage();

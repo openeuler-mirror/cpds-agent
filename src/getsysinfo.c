@@ -4,7 +4,23 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "monitor.h"
+#include "../util/sqlite3/sqlite3.h"
 
+int create_sysinfotable(sqlite3 *db)
+{
+    char sql[128];
+    char *errmsg = NULL;
+
+    sql = "create table if not exists sysinfotable (id integer primary key, name text, value text);";
+    if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+    {
+        printf("create table error!%s\n", errmsg);
+        sqlite3_free(errmsg);
+        return RESULT_FAILED;
+    }
+
+    return RESULT_SUCCESS;
+}
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
 {
