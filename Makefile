@@ -15,8 +15,8 @@ install:
 	systemctl daemon-reload
 	systemctl enable ${TARGET}
 	systemctl restart ${TARGET}
-unstall:
-    systemctl stop  ${TARGET} >/dev/null 2>&1
+uninstall:
+	systemctl stop  ${TARGET} >/dev/null 2>&1
 	-@rm -rf ${SYSTEMDPATH}/${TARGET}.service >/dev/null 2>&1
 	-@rm -rf ${COPYPATH}/${TARGET} >/dev/null 2>&1
 clean:
