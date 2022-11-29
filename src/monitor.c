@@ -18,13 +18,21 @@ int main()
        printf("open db faild:%s", sqlite3_errmsg(db));
        return RESULT_FAILED; 
     }
-    res = pthread_create(&getinfo_tid, NULL, getSysinfo,(void *)&sys);
+
+    if (SQLITE_OK != create_sysinfotable(db)
+    {
+       printf("create table failed!\n");
+       sqlite3_close(db);
+       return RESULT_FAILED;
+    }
+
+    res = pthread_create(&getinfo_tid, NULL, getSysinfo, (void *)&sys);
     if (res != 0)
     {
        printf("线程创建失败");
        return RESULT_FAILED; 
     }
-    res = pthread_create(&pushinfo_tid, NULL, pushSysinfo,(void *)&sys);
+    res = pthread_create(&pushinfo_tid, NULL, pushSysinfo, (void *)&sys);
     if( res != 0)
     {
        printf("线程创建失败");

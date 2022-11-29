@@ -1,5 +1,6 @@
 #ifndef MONITOR_H
 #define MONITOR_H
+#include "../util/sqlite3/sqlite3.h"
 
 #define RESULT_FAILED -1
 #define RESULT_SUCCESS 0
@@ -16,6 +17,7 @@ typedef struct sysinfo
     float IoWriteSize;
 }sys_t;
 
+int create_sysinfotable(sqlite3 *db);
 void* getSysinfo(void* arg);
 void* pushSysinfo(void* arg);
 float get_sysCpuUsage();
