@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "monitor.h"
+#include "database.h"
 #include "../util/sqlite3/sqlite3.h"
 
 int create_sysinfotable(sqlite3 *db)
@@ -15,6 +16,22 @@ int create_sysinfotable(sqlite3 *db)
     if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
     {
         printf("create table error!%s\n", errmsg);
+        sqlite3_free(errmsg);
+        return RESULT_FAILED;
+    }
+
+    return RESULT_SUCCESS;
+}
+
+int add_record(sqlite3 *db, char *name, float data)
+{
+    char sql[128];
+    char *errmsg = NULL;
+
+    sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
+    if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+    {
+        printf("add record fail!%s\n", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
