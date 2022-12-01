@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "monitor.h"
+#include "database.h"
 #include "../util/sqlite3/sqlite3.h"
 
 int main()

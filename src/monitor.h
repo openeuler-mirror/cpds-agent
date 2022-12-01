@@ -18,6 +18,7 @@ typedef struct sysinfo
 }sys_t;
 
 int create_sysinfotable(sqlite3 *db);
+int add_record(sqlite3 *db, char *name, float data);
 void* getSysinfo(void* arg);
 void* pushSysinfo(void* arg);
 float get_sysCpuUsage();
