@@ -20,7 +20,7 @@ int main()
        return RESULT_FAILED; 
     }
 
-    if (SQLITE_OK != create_sysinfotable(db)
+    if (SQLITE_OK != create_sysinfotable(db))
     {
        printf("create table failed!\n");
        sqlite3_close(db);
