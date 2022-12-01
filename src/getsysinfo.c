@@ -9,11 +9,9 @@
 
 int create_sysinfotable(sqlite3 *db)
 {
-    char sql[128];
     char *errmsg = NULL;
 
-    sql = "create table if not exists sysinfotable (id integer primary key, name text, value text);";
-    if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+    if (SQLITE_OK != sqlite3_exec(db, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg))
     {
         printf("create table error!%s\n", errmsg);
         sqlite3_free(errmsg);
