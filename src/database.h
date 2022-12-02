@@ -12,5 +12,6 @@ int add_record(sqlite3 *db, char *name, float data);
 int display(void *para,int ncol,char *col_val[],char ** col_name);
 
 extern sqlite3 *db;
+extern pthread_mutex_t mut;
 #endif
 

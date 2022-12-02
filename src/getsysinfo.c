@@ -94,6 +94,7 @@ int inquire_uscb(sqlite3 *db)
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
 {
+    pthread_mutex_lock(&mut); 
     sys_t *sys = (sys_t *)arg;
     int count = 5;
     while (1)
@@ -108,10 +109,12 @@ void* getSysinfo(void* arg)
             count--;
         }
     }
+    pthread_mutex_unlock(&mut); 
 }
 
 void *pushSysinfo(void *arg)
 {
+    pthread_mutex_lock(&mut);
     sys_t *sys = (sys_t *)arg;
     int count=5;
     while (((add_record(db, "CpuUsage", sys->CpuUsage)) < 0) || ((add_record(db, "DiskUsage", sys->DiskUsage)) < 0) || ((add_record(db, "IoWriteSize", sys->IoWriteSize)) < 0))
@@ -122,6 +125,7 @@ void *pushSysinfo(void *arg)
         }
         count--;
     }
+    pthread_mutex_unlock(&mut);
 }
 
 float get_sysCpuUsage()
