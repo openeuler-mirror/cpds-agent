@@ -37,11 +37,11 @@ int add_record(sqlite3 *db, char *name, float data)
     return RESULT_SUCCESS;
 }
 //TODO:该版本这里为功能测试代码输入删除信息，后续会做成接口获取删除信息
-int delete_record(sqlite3 *db,int id)
+int delete_record(sqlite3 *db, int id)
 {
     char sql[128];
     char *errmsg = NULL;
-    
+
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
     if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
     {
@@ -51,6 +51,30 @@ int delete_record(sqlite3 *db,int id)
     }
 
     return RESULT_SUCCESS;
+}
+//TODO:该版本这里为功能测试代码,实现回调函数打印表信息的方法，后续会将信息打印到日志里
+int display(void *para, int ncol, char *col_val[], char **col_name)
+{
+    int *flag = NULL;
+    int i;
+    flag = (int *)para;
+
+    if (0 == *flag)
+    {
+        *flag = 1;
+        printf("column number is:%d\n", ncol); //flag=0为第一次，打印列的名称
+        for (i = 0; i < ncol; i++)
+        {
+            printf("%10s", col_name[i]);
+        }
+        printf("\n");
+    }
+    for (i = 0; i < ncol; i++) //打印值
+    {
+        printf("%10s", col_val[i]);
+    }
+    printf("\n");
+    return 0;
 }
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
@@ -71,7 +95,7 @@ void* getSysinfo(void* arg)
     }
 }
 
-void* pushSysinfo(void* arg)
+void *pushSysinfo(void *arg)
 {
     sys_t *sys = (sys_t *)arg;
 }
