@@ -1,5 +1,7 @@
 CC = gcc
 CP = cp
+MKDIR = mkdir -p
+DIRECTORY = bin
 LIBS = -lpthread -ldl -lm 
 LIBS += -Wl,-Bstatic -L"util/sqlite3" -lsqlite3 -Wl,-Bdynamic  
 TARGET = cpds-agent
@@ -9,6 +11,8 @@ SERVICEFILE = config/cpds-agent.service
 SYSTEMDPATH = /usr/lib/systemd/system
 all:
 	$(CC) ${FILEPATH} -o ${TARGET} ${LIBS}
+	$(MKDIR)  $(DIRECTORY)
+	mv ${TARGET} $(DIRECTORY)
 install:
 	$(CP) ${TARGET} ${COPYPATH}
 	$(CP) ${SERVICEFILE} ${SYSTEMDPATH}
