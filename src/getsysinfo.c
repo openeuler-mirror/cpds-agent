@@ -36,6 +36,22 @@ int add_record(sqlite3 *db, char *name, float data)
 
     return RESULT_SUCCESS;
 }
+//TODO:该版本这里为功能测试代码输入删除信息，后续会做成接口获取删除信息
+int delete_record(sqlite3 *db,int id)
+{
+    char sql[128];
+    char *errmsg = NULL;
+    
+    sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
+    if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+    {
+        printf("delete error! %s\n", errmsg);
+        sqlite3_free(errmsg);
+        return RESULT_FAILED;
+    }
+
+    return RESULT_SUCCESS;
+}
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
 {
