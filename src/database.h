@@ -4,6 +4,7 @@
 
 #define CREATE_SYSINFOTABLE "create table if not exists sysinfotable (id integer primary key, name text, value text);"
 #define INSERT_INTO_SYSINFOTABLE "insert into sysinfotable (id, name, value) values (NULL, '%s', '%4.2f');"
+#define DELETE_IN_TABLE_SYSINFO "delete from sysinfotable where id = %d;"
 
 int create_sysinfotable(sqlite3 *db);
 int add_record(sqlite3 *db, char *name, float data);
