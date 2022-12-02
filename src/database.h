@@ -9,5 +9,6 @@
 int create_sysinfotable(sqlite3 *db);
 int add_record(sqlite3 *db, char *name, float data);
 
+extern sqlite3 *db;
 #endif
 
