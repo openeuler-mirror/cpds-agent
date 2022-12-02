@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include "monitor.h"
 #include "database.h"
-#include "../util/sqlite3/sqlite3.h"
+#include "../libs/sqlite3/sqlite3.h"
 
 int create_sysinfotable(sqlite3 *db)
 {
