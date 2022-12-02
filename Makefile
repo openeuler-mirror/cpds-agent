@@ -10,7 +10,7 @@ SYSTEMDPATH = /usr/lib/systemd/system
 all:
 	$(CC) ${FILEPATH} -o ${TARGET} ${LIBS}
 install:
-	$(CP) ${TARGET} ${COPYPATH}
+	$(CP) ${DIRECTORY}/${TARGET} ${COPYPATH}
 	$(CP) ${SERVICEFILE} ${SYSTEMDPATH}
 	systemctl daemon-reload
 	systemctl enable ${TARGET}
