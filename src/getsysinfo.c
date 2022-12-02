@@ -76,6 +76,21 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     printf("\n");
     return 0;
 }
+//TODO:该版本这里为功能测试代码，查询后，用回调函数显示,后续测试完删除
+int inquire_uscb(sqlite3 *db)
+{
+    char *errmsg = NULL;
+    int flag = 0;
+
+    if (SQLITE_OK != sqlite3_exec(db, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg))
+    {
+        printf("select fail!%s\n", errmsg);
+        sqlite3_free(errmsg);
+        return RESULT_FAILED;
+    }
+
+    return RESULT_SUCCESS;
+}
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
 {
