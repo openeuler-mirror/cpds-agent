@@ -113,6 +113,7 @@ void* getSysinfo(void* arg)
 void *pushSysinfo(void *arg)
 {
     sys_t *sys = (sys_t *)arg;
+    int count=5;
     while (((add_record(db, "CpuUsage", sys->CpuUsage)) < 0) || ((add_record(db, "DiskUsage", sys->DiskUsage)) < 0) || ((add_record(db, "IoWriteSize", sys->IoWriteSize)) < 0))
     {
         if (count == 0)
