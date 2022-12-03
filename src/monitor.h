@@ -1,6 +1,6 @@
 #ifndef MONITOR_H
 #define MONITOR_H
-#include "../util/sqlite3/sqlite3.h"
+#include "../libs/sqlite3/sqlite3.h"
 
 #define RESULT_FAILED -1
 #define RESULT_SUCCESS 0
