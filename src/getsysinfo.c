@@ -117,7 +117,7 @@ void *pushSysinfo(void *arg)
     pthread_mutex_lock(&mut);
     sys_t *sys = (sys_t *)arg;
     int count=5;
-    while (((add_record(db, "CpuUsage", sys->CpuUsage)) < 0) || ((add_record(db, "DiskUsage", sys->DiskUsage)) < 0) || ((add_record(db, "IoWriteSize", sys->IoWriteSize)) < 0))
+    while (((add_record(db, FIELD_CPU_USAGE, sys->CpuUsage)) < 0) || ((add_record(db, FIELD_DISK_USAGE, sys->DiskUsage)) < 0) || ((add_record(db, FIELD_IO_WRITESIZE, sys->IoWriteSize)) < 0))
     {
         if (count == 0)
         {
