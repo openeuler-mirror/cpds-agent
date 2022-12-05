@@ -10,6 +10,10 @@
 #define SYS_100_PERSENT 100
 #define MAXBUFSIZE 1024
 #define WAIT_SECOND 3 
+
+#define FIELD_CPU_USAGE "CpuUsage"
+#define FIELD_DISK_USAGE  "DiskUsage"
+#define FIELD_IO_WRITESIZE  "IoWriteSize"
 typedef struct sysinfo
 {
     double CpuUsage;
