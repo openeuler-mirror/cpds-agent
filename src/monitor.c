@@ -6,6 +6,7 @@
 #include "monitor.h"
 #include "database.h"
 #include "../libs/sqlite3/sqlite3.h"
+#include "../libs/zlog/zlog.h"
 
 extern pthread_mutex_t mut;
 int main()
@@ -13,7 +14,6 @@ int main()
     sys_t sys;
     int res;
     pthread_t getinfo_tid, pushinfo_tid;
-
 
     pthread_mutex_init(&mut, NULL);
     if(SQLITE_OK !=init_database())

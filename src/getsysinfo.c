@@ -6,6 +6,7 @@
 #include "monitor.h"
 #include "database.h"
 #include "../libs/sqlite3/sqlite3.h"
+#include "../libs/zlog/zlog.h"
 
 pthread_mutex_t mut;
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
