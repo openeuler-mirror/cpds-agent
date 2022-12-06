@@ -5,6 +5,7 @@
 #include "monitor.h"
 #include "database.h"
 #include "../libs/sqlite3/sqlite3.h"
+#include "../libs/zlog/zlog.h"
 
 #define CREATE_SYSINFOTABLE "create table if not exists sysinfotable (id integer primary key, name text, value text);"
 #define INSERT_INTO_SYSINFOTABLE "insert into sysinfotable (id, name, value) values (NULL, '%s', '%4.2f');"
