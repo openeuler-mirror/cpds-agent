@@ -7,25 +7,18 @@
 #include "database.h"
 #include "../libs/sqlite3/sqlite3.h"
 
-sqlite3 *db;
-pthread_mutex_t mut;
+extern pthread_mutex_t mut;
 int main()
 {
     sys_t sys;
     int res;
     pthread_t getinfo_tid, pushinfo_tid;
+
+
     pthread_mutex_init(&mut, NULL);
-
-    if(sqlite3_open("test.db", &db) != SQLITE_OK)
+    if(SQLITE_OK !=init_database())
     {
-       printf("open db faild:%s", sqlite3_errmsg(db));
-       return RESULT_FAILED; 
-    }
-
-    if (SQLITE_OK != create_sysinfotable(db))
-    {
-       printf("create table failed!\n");
-       sqlite3_close(db);
+       printf("数据库初始化失败");
        return RESULT_FAILED;
     }
 

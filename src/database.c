@@ -11,11 +11,12 @@
 #define DELETE_IN_TABLE_SYSINFO "delete from sysinfotable where id = %d;"
 #define SELECT_SYSINFOTABLE "select * from sysinfotable;"
 
-int create_sysinfotable(sqlite3 *db)
+static sqlite3 *pdb;
+int create_sysinfotable()
 {
     char *errmsg = NULL;
 
-    if (SQLITE_OK != sqlite3_exec(db, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg))
+    if (SQLITE_OK != sqlite3_exec(pdb, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg))
     {
         printf("create table error!%s\n", errmsg);
         sqlite3_free(errmsg);
@@ -25,13 +26,31 @@ int create_sysinfotable(sqlite3 *db)
     return RESULT_SUCCESS;
 }
 
-int add_record(sqlite3 *db, char *name, float data)
+int init_database()
+{
+    if(sqlite3_open("test.db", &pdb) != SQLITE_OK)
+    {
+       printf("open pdb faild:%s", sqlite3_errmsg(pdb));
+       return RESULT_FAILED; 
+    }
+
+    if (SQLITE_OK != create_sysinfotable(pdb))
+    {
+       printf("create table failed!\n");
+       sqlite3_close(pdb);
+       return RESULT_FAILED;
+    }
+
+    return RESULT_SUCCESS;
+}
+
+int add_record(char *name, float data)
 {
     char sql[128];
     char *errmsg = NULL;
 
     sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
-    if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+    if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
     {
         printf("add record fail!%s\n", errmsg);
         sqlite3_free(errmsg);
@@ -41,13 +60,13 @@ int add_record(sqlite3 *db, char *name, float data)
     return RESULT_SUCCESS;
 }
 //TODO:该版本这里为功能测试代码输入删除信息，后续会做成接口获取删除信息
-int delete_record(sqlite3 *db, int id)
+int delete_record(int id)
 {
     char sql[128];
     char *errmsg = NULL;
 
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
-    if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+    if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
     {
         printf("delete error! %s\n", errmsg);
         sqlite3_free(errmsg);
@@ -81,12 +100,12 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     return 0;
 }
 //TODO:该版本这里为功能测试代码，查询后，用回调函数显示,后续测试完删除
-int inquire_uscb(sqlite3 *db)
+int inquire_uscb()
 {
     char *errmsg = NULL;
     int flag = 0;
 
-    if (SQLITE_OK != sqlite3_exec(db, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg))
+    if (SQLITE_OK != sqlite3_exec(pdb, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg))
     {
         printf("select fail!%s\n", errmsg);
         sqlite3_free(errmsg);
