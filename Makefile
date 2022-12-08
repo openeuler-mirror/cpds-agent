@@ -10,11 +10,15 @@ FILEPATH = src/*.c
 COPYPATH = /usr/bin
 SERVICEFILE = config/cpds-agent.service
 SYSTEMDPATH = /usr/lib/systemd/system
+LOGCONFILE = config/cpds_log.config
+LOGCONFTARGET = /etc/cpds/cpds-agent
 all:
 	$(CC) ${FILEPATH} -o ${TARGET} ${LIBS}
 	$(MKDIR)  $(DIRECTORY)
 	mv ${TARGET} $(DIRECTORY)
 install:
+	$(MKDIR) ${LOGCONFTARGET}
+	$(CP) ${LOGCONFILE} ${LOGCONFTARGET}
 	$(CP) ${DIRECTORY}/${TARGET} ${COPYPATH}
 	$(CP) ${SERVICEFILE} ${SYSTEMDPATH}
 	systemctl daemon-reload
