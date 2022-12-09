@@ -5,8 +5,8 @@
 #include <pthread.h>
 #include "monitor.h"
 #include "database.h"
+#include "cpdslog.h"
 #include "../libs/sqlite3/sqlite3.h"
-#include "../libs/zlog/zlog.h"
 
 extern pthread_mutex_t mut;
 int main()
@@ -14,8 +14,16 @@ int main()
     sys_t sys;
     int res;
     pthread_t getinfo_tid, pushinfo_tid;
-
     pthread_mutex_init(&mut, NULL);
+
+    res = CPDS_ZLOG_INIT(CONFIG_PATH,CPDSCLASS_NAME);
+    if(res)
+    {
+       printf("cpds zlog init fail!");
+       CPDS_ZLOG_FINI();
+       return RESULT_FAILED;
+    }
+
     if(SQLITE_OK !=init_database())
     {
        printf("数据库初始化失败");
