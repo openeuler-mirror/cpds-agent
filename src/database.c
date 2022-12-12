@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "monitor.h"
 #include "database.h"
+#include "cpdslog.h"
 #include "../libs/sqlite3/sqlite3.h"
 #include "../libs/zlog/zlog.h"
 
@@ -29,6 +30,8 @@ int create_sysinfotable()
 
 int init_database()
 {
+    CPDS_ZLOG_INFO("initializing database");
+
     if(sqlite3_open("test.db", &pdb) != SQLITE_OK)
     {
        printf("open pdb faild:%s", sqlite3_errmsg(pdb));

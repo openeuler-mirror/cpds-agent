@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include "monitor.h"
 #include "database.h"
+#include "cpdslog.h"
 #include "../libs/sqlite3/sqlite3.h"
 #include "../libs/zlog/zlog.h"
 
@@ -12,6 +13,8 @@ pthread_mutex_t mut;
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* getSysinfo(void* arg)
 {
+    CPDS_ZLOG_INFO("obtain the system information about the node");
+
     pthread_mutex_lock(&mut); 
     sys_t *sys = (sys_t *)arg;
     int count = 5;
@@ -32,6 +35,8 @@ void* getSysinfo(void* arg)
 
 void *pushSysinfo(void *arg)
 {
+    CPDS_ZLOG_INFO("upload system information to the database");
+    
     pthread_mutex_lock(&mut);
     sys_t *sys = (sys_t *)arg;
     int count=5;
