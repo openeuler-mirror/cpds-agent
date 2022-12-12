@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
 #include "monitor.h"
 #include "database.h"
+#include "cpdslog.h"
 #include "../libs/sqlite3/sqlite3.h"
-#include "../libs/zlog/zlog.h"
 
 pthread_mutex_t mut;
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
@@ -58,13 +59,13 @@ float get_sysCpuUsage()
     fp = fopen("/proc/stat", "r");
     if (fp == NULL)
     {
-        perror("fopen error");
+        CPDS_ZLOG_ERROR("fopen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
 
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
-        perror("fgets");
+        CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
         fclose(fp);
         return RESULT_FAILED;
     }
@@ -82,7 +83,7 @@ float get_sysCpuUsage()
 
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
-        perror("fgets");
+        CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
         fclose(fp);
         return RESULT_FAILED;
     }
@@ -106,7 +107,7 @@ double get_sysDiskUsage()
     fp = popen("df", "r");
     if (fp == NULL)
     {
-        perror("popen error");
+        CPDS_ZLOG_ERROR("popen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
 
@@ -137,7 +138,7 @@ float get_sysIoWriteSize()
     FILE *fp = popen(cmd, "r");
     if (!fp)
     {
-        perror("popen error");
+        CPDS_ZLOG_ERROR("popen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
 
