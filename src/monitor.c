@@ -20,27 +20,27 @@ int main()
     res = CPDS_ZLOG_INIT(CONFIG_PATH,CPDSCLASS_NAME);
     if(res)
     {
-       printf("cpds zlog init fail!");
+       CPDS_ZLOG_ERROR("cpds-zlog failed to be initialized");
        CPDS_ZLOG_FINI();
        return RESULT_FAILED;
     }
 
     if(SQLITE_OK !=init_database())
     {
-       printf("数据库初始化失败");
+       CPDS_ZLOG_ERROR("failed to initialize the database");
        return RESULT_FAILED;
     }
 
     res = pthread_create(&getinfo_tid, NULL, getSysinfo, (void *)&sys);
     if (res != 0)
     {
-       printf("线程创建失败");
+       CPDS_ZLOG_ERROR("pthread creation failure");
        return RESULT_FAILED; 
     }
     res = pthread_create(&pushinfo_tid, NULL, pushSysinfo, (void *)&sys);
     if( res != 0)
     {
-       printf("线程创建失败");
+       CPDS_ZLOG_ERROR("pthread creation failure");
        return RESULT_FAILED;
     }
 

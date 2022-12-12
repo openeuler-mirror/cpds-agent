@@ -6,7 +6,6 @@
 #include "database.h"
 #include "cpdslog.h"
 #include "../libs/sqlite3/sqlite3.h"
-#include "../libs/zlog/zlog.h"
 
 #define CREATE_SYSINFOTABLE "create table if not exists sysinfotable (id integer primary key, name text, value text);"
 #define INSERT_INTO_SYSINFOTABLE "insert into sysinfotable (id, name, value) values (NULL, '%s', '%4.2f');"
@@ -20,7 +19,7 @@ int create_sysinfotable()
 
     if (SQLITE_OK != sqlite3_exec(pdb, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg))
     {
-        printf("create table error!%s\n", errmsg);
+        CPDS_ZLOG_ERROR("table creation error %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
@@ -34,13 +33,13 @@ int init_database()
 
     if(sqlite3_open("test.db", &pdb) != SQLITE_OK)
     {
-       printf("open pdb faild:%s", sqlite3_errmsg(pdb));
+       CPDS_ZLOG_ERROR("open pdb failed:%s", sqlite3_errmsg(pdb));
        return RESULT_FAILED; 
     }
 
     if (SQLITE_OK != create_sysinfotable(pdb))
     {
-       printf("create table failed!\n");
+       CPDS_ZLOG_ERROR("table creation failure");
        sqlite3_close(pdb);
        return RESULT_FAILED;
     }
@@ -59,7 +58,7 @@ int add_record(char *name, float data)
     sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
     if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
     {
-        printf("add record fail!%s\n", errmsg);
+        CPDS_ZLOG_ERROR("data insertion failure %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
@@ -77,7 +76,7 @@ int delete_record(int id)
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
     if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
     {
-        printf("delete error! %s\n", errmsg);
+        CPDS_ZLOG_ERROR("deleting error %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
@@ -116,7 +115,7 @@ int inquire_uscb()
 
     if (SQLITE_OK != sqlite3_exec(pdb, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg))
     {
-        printf("select fail!%s\n", errmsg);
+        CPDS_ZLOG_ERROR("failure to select %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
