@@ -48,10 +48,13 @@ int init_database()
     return RESULT_SUCCESS;
 }
 
+//TODO:该版本这里为功能测试代码，后续会根据传入数据信息来，完善功能和统一规范日志信息命名。
 int add_record(char *name, float data)
 {
     char sql[128];
     char *errmsg = NULL;
+
+    CPDS_ZLOG_DEBUG("add_record name data: %s %f", name, data);
 
     sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
     if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
@@ -68,6 +71,8 @@ int delete_record(int id)
 {
     char sql[128];
     char *errmsg = NULL;
+
+    CPDS_ZLOG_DEBUG("delete_record id: %d", id);
 
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
     if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
