@@ -16,7 +16,7 @@
 
 #define CONFIG_PATH "/etc/cpds/cpds-agent/cpds_log.conf"
 #define CPDSCLASS_NAME "cpds-agent"
-typedef struct sysinfo
+typedef struct systeminfo
 {
     double CpuUsage;
     float DiskUsage;

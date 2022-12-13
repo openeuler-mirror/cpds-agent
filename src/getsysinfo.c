@@ -4,6 +4,13 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <linux/if.h>
+#include <linux/sockios.h>
+#include <linux/ethtool.h>
 #include "monitor.h"
 #include "database.h"
 #include "cpdslog.h"
@@ -156,4 +163,34 @@ float get_sysIoWriteSize()
 
     pclose(fp);
     return arr[12];
+}
+
+//TODO:该版本这里为功能测试代码，后须会完善成多网卡
+int get_netlink_status(const char *if_name)
+{
+    int skfd;
+    struct ifreq ifr;
+    struct ethtool_value edata;
+
+    edata.cmd = ETHTOOL_GLINK;
+    edata.data = 0; 
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name) - 1);
+    ifr.ifr_data = (char *)&edata;
+
+    if ((skfd = socket(AF_INET, SOCK_DGRAM, 0)) <= 0)
+    {
+        CPDS_ZLOG_ERROR("create socket fail");
+        return RESULT_FAILED;
+    }
+
+    if (ioctl(skfd, SIOCETHTOOL, &ifr) == -1)
+    {
+        CPDS_ZLOG_ERROR("failed to obtain the NIC status");
+        close(skfd);
+        return RESULT_FAILED;
+    }
+
+    close(skfd);
+    return edata.data;
 }
