@@ -134,6 +134,8 @@ double get_sysDiskUsage()
 
     used_rate = (dev_used / dev_total) * SYS_100_PERSENT;
 
+    CPDS_ZLOG_DEBUG("diskusage: %4.2f", used_rate);
+
     pclose(fp);
     return used_rate;
 }
