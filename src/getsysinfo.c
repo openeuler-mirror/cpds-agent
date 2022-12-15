@@ -176,13 +176,13 @@ int get_netlink_status(const char *if_name)
 {
     int skfd;
     struct ifreq ifr;
-    struct ethtool_value edata;
+    struct ethtool_value netcard;
 
-    edata.cmd = ETHTOOL_GLINK;
-    edata.data = 0; 
+    netcard.cmd = ETHTOOL_GLINK;
+    netcard.data = 0; 
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name) - 1);
-    ifr.ifr_data = (char *)&edata;
+    ifr.ifr_data = (char *)&netcard;
 
     if ((skfd = socket(AF_INET, SOCK_DGRAM, 0)) <= 0)
     {
@@ -198,5 +198,5 @@ int get_netlink_status(const char *if_name)
     }
 
     close(skfd);
-    return edata.data;
+    return netcard.data;
 }
