@@ -93,18 +93,16 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     if (0 == *flag)
     {
         *flag = 1;
-        printf("column number is:%d\n", ncol); 
+        CPDS_ZLOG_DEBUG("column number is:%d", ncol);
         for (i = 0; i < ncol; i++)
         {
-            printf("%10s", col_name[i]);
+            CPDS_ZLOG_DEBUG("%10s", col_name[i]);
         }
-        printf("\n");
     }
     for (i = 0; i < ncol; i++) 
     {
-        printf("%10s", col_val[i]);
+        CPDS_ZLOG_DEBUG("%10s", col_val[i]);
     }
-    printf("\n");
     return RESULT_SUCCESS;
 }
 //TODO:该版本这里为功能测试代码，查询后，用回调函数显示,后续测试完删除
