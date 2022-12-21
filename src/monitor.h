@@ -25,11 +25,11 @@ typedef struct systeminfo
 
 typedef int  data_t;
 typedef char str_t;
-typedef struct linklist
+typedef struct LNode
 {
-    str_t   name[20];
+    str_t   *name;
     data_t    stat;
-    struct network *next;
+    struct LNode *next;
 }LinkList;
 
 void* getSysinfo(void* arg);
