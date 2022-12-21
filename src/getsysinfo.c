@@ -206,6 +206,7 @@ int get_netlink_status(const char *if_name)
 //TODO:该版本这里为获取多张网卡名功能测试代码，后须会完善获取状态并存入链表中
 int get_multiple_netlink()
 {
+    const char *stat;
     struct ifaddrs *ifap, *ifa;
     struct sockaddr_in6 *sa;
     struct sockaddr_in *sa4;
@@ -220,7 +221,10 @@ int get_multiple_netlink()
             sa = (struct sockaddr_in6 *)ifa->ifa_addr;
             getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr,
                         sizeof(addr), NULL, 0, NI_NUMERICHOST);
+
             CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
+            stat = get_netlink_status(ifa->ifa_name) == 1 ? "up" : "down";
+            CPDS_ZLOG_DEBUG("Net link status: %s", stat);
         }
         else 
         {
@@ -229,6 +233,8 @@ int get_multiple_netlink()
                         sizeof(addr4), NULL, 0, NI_NUMERICHOST);
 
             CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
+            stat = get_netlink_status(ifa->ifa_name) == 1 ? "up" : "down";
+            CPDS_ZLOG_DEBUG("Net link status: %s", stat);
         }
     }
 
