@@ -23,6 +23,15 @@ typedef struct systeminfo
     float IoWriteSize;
 }sys_t;
 
+typedef int  data_t;
+typedef char str_t;
+typedef struct linklist
+{
+    str_t   name[20];
+    data_t    stat;
+    struct network *next;
+}LinkList;
+
 void* getSysinfo(void* arg);
 void* pushSysinfo(void* arg);
 float get_sysCpuUsage();
