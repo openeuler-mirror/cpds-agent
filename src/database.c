@@ -93,14 +93,14 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     if (0 == *flag)
     {
         *flag = 1;
-        printf("column number is:%d\n", ncol); //flag=0为第一次，打印列的名称
+        printf("column number is:%d\n", ncol); 
         for (i = 0; i < ncol; i++)
         {
             printf("%10s", col_name[i]);
         }
         printf("\n");
     }
-    for (i = 0; i < ncol; i++) //打印值
+    for (i = 0; i < ncol; i++) 
     {
         printf("%10s", col_val[i]);
     }
