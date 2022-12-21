@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -199,4 +201,37 @@ int get_netlink_status(const char *if_name)
 
     close(skfd);
     return netcard.data;
+}
+
+//TODO:该版本这里为获取多张网卡名功能测试代码，后须会完善获取状态并存入链表中
+int get_multiple_netlink()
+{
+    struct ifaddrs *ifap, *ifa;
+    struct sockaddr_in6 *sa;
+    struct sockaddr_in *sa4;
+    char addr[INET6_ADDRSTRLEN];
+    char addr4[INET_ADDRSTRLEN];
+
+    getifaddrs(&ifap);
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr->sa_family == AF_INET6)
+        {
+            sa = (struct sockaddr_in6 *)ifa->ifa_addr;
+            getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr,
+                        sizeof(addr), NULL, 0, NI_NUMERICHOST);
+            CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
+        }
+        else 
+        {
+            sa4 = (struct sockaddr_in *)ifa->ifa_addr;
+            getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), addr4,
+                        sizeof(addr4), NULL, 0, NI_NUMERICHOST);
+
+            CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
+        }
+    }
+
+    freeifaddrs(ifap);
+    return RESULT_SUCCESS;
 }
