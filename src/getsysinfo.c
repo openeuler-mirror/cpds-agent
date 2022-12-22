@@ -13,6 +13,7 @@
 #include <linux/if.h>
 #include <linux/sockios.h>
 #include <linux/ethtool.h>
+#include <sys/statfs.h>
 #include "monitor.h"
 #include "database.h"
 #include "cpdslog.h"
@@ -115,33 +116,26 @@ float get_sysCpuUsage()
 
 double get_sysDiskUsage()
 {
-    FILE *fp;
-    char filesystem[SYS_DISK_NAME_LEN], available[SYS_DISK_NAME_LEN], use[SYS_DISK_NAME_LEN], mounted[SYS_DISK_NAME_LEN], buf[SYS_DISK_BUFF_LEN];
-    double used, blocks, used_rate;
+    char buf[] = "/";
+    struct statfs stStatfs;
+    int lSts;
+    double percentage; 
 
-    fp = popen("df", "r");
-    if (fp == NULL)
+    memset(&stStatfs, 0, sizeof(struct statfs));
+    lSts = 0;
+
+    lSts = statfs(buf, &stStatfs);
+    if (0 != lSts)
     {
-        CPDS_ZLOG_ERROR("popen error - '%s'", strerror(errno));
+        CPDS_ZLOG_ERROR("statfs faile");
         return RESULT_FAILED;
     }
 
-    fgets(buf, SYS_DISK_BUFF_LEN, fp);
-    double dev_total = 0, dev_used = 0;
+    percentage = (stStatfs.f_blocks - stStatfs.f_bfree) * 100 / (stStatfs.f_blocks - stStatfs.f_bfree + stStatfs.f_bavail) + 1;
+    
+    CPDS_ZLOG_DEBUG("diskusage: %4.2f", percentage);
 
-    //累加每个设备大小之和赋值给dev_total,累加每个设备已用空间之和赋值给dev_used
-    while (6 == fscanf(fp, "%s %lf %lf %s %s %s", filesystem, &blocks, &used, available, use, mounted))
-    {
-        dev_total += blocks;
-        dev_used += used;
-    }
-
-    used_rate = (dev_used / dev_total) * SYS_100_PERSENT;
-
-    CPDS_ZLOG_DEBUG("diskusage: %4.2f", used_rate);
-
-    pclose(fp);
-    return used_rate;
+    return percentage;
 }
 
 float get_sysIoWriteSize()
