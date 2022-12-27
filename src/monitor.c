@@ -31,13 +31,13 @@ int main()
        return RESULT_FAILED;
     }
 
-    res = pthread_create(&getinfo_tid, NULL, getSysinfo, (void *)&sys);
+    res = pthread_create(&getinfo_tid, NULL, get_sysinfo, (void *)&sys);
     if (res != 0)
     {
        CPDS_ZLOG_ERROR("pthread creation failure");
        return RESULT_FAILED; 
     }
-    res = pthread_create(&pushinfo_tid, NULL, pushSysinfo, (void *)&sys);
+    res = pthread_create(&pushinfo_tid, NULL, push_sysinfo, (void *)&sys);
     if( res != 0)
     {
        CPDS_ZLOG_ERROR("pthread creation failure");
