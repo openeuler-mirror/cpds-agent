@@ -21,20 +21,6 @@
 
 pthread_mutex_t mut;
 
-LinkList *creat_net_linklist()
-{
-    LinkList *head = (LinkList *)malloc(sizeof(LinkList));
-    if (NULL == head)
-    {
-        CPDS_ZLOG_ERROR("malloc error!");
-        return NULL;
-    }
-    head->stat = -1;
-    head->name = NULL;
-    head->next = head;
-    return head;
-}
-
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
 void* get_sysinfo(void* arg)
 {

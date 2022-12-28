@@ -29,7 +29,6 @@ typedef struct LNode
 {
     str_t   *name;
     data_t    stat;
-    struct LNode *next;
 }LinkList;
 
 void* get_sysinfo(void* arg);
