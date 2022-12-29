@@ -208,6 +208,7 @@ int get_multiple_netlink()
     struct sockaddr_in *sa4;
     char addr[INET6_ADDRSTRLEN];
     char addr4[INET_ADDRSTRLEN];
+    int ret;
 
     getifaddrs(&ifap);
     for (ifa = ifap; ifa; ifa = ifa->ifa_next)
@@ -218,19 +219,27 @@ int get_multiple_netlink()
             getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr,
                         sizeof(addr), NULL, 0, NI_NUMERICHOST);
 
-            CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
-            stat = get_netlink_status(ifa->ifa_name) == 1 ? "up" : "down";
-            CPDS_ZLOG_DEBUG("Net link status: %s", stat);
+            ret = get_netlink_status(ifa->ifa_name);
+            if (ret != RESULT_FAILED)
+            {
+                CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
+                stat = ret == 1 ? "up" : "down";
+                CPDS_ZLOG_DEBUG("Net link status: %s", stat);
+            }
         }
-        else 
+        else
         {
             sa4 = (struct sockaddr_in *)ifa->ifa_addr;
             getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), addr4,
                         sizeof(addr4), NULL, 0, NI_NUMERICHOST);
 
-            CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
-            stat = get_netlink_status(ifa->ifa_name) == 1 ? "up" : "down";
-            CPDS_ZLOG_DEBUG("Net link status: %s", stat);
+            ret = get_netlink_status(ifa->ifa_name);
+            if (ret != RESULT_FAILED)
+            {
+                CPDS_ZLOG_DEBUG("NIC NAME: %s ", ifa->ifa_name);
+                stat = ret == 1 ? "up" : "down";
+                CPDS_ZLOG_DEBUG("Net link status: %s", stat);
+            }
         }
     }
 
