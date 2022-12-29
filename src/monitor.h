@@ -29,7 +29,7 @@ typedef struct LNode
 {
     str_t   *name;
     data_t    stat;
-}LinkList;
+}NetData;
 
 void* get_sysinfo(void* arg);
 void* push_sysinfo(void* arg);
