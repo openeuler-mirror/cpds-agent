@@ -5,6 +5,7 @@ DIRECTORY = bin
 LIBS = -lpthread -ldl -lm 
 LIBS += -Wl,-Bstatic -L"libs/sqlite3" -lsqlite3 -Wl,-Bdynamic
 LIBS += -Wl,-Bstatic -L"libs/zlog" -lzlog -Wl,-Bdynamic
+LIBS +=  -g -O0 -lglib-2.0 -I /usr/include/glib-2.0/ `pkg-config --cflags glib-2.0`
 TARGET = cpds-agent
 FILEPATH = src/*.c
 COPYPATH = /usr/bin
