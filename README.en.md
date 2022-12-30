@@ -1,5 +1,7 @@
 # cpds-agent
-
+<p align="center">
+<a href="https://gitee.com/openeuler/Cpds"><img src="docs/images/cpds-icon.png" alt="banner" width="250px"></a>
+</p>
 #### Introduce
 Collect Container info for Container Problem Detect System.
 Cpds-agent indicates CPDS(Container Problem Detect System)Information acquisition component of container fault detection system
