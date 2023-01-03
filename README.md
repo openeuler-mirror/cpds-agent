@@ -1,5 +1,7 @@
 # cpds-agent
-
+<p align="center">
+<a href="https://gitee.com/openeuler/Cpds"><img src="doc/images/cpds-icon.png" alt="banner" width="250px"></a>
+</p>
 #### 介绍
 Collect Container info for Container Problem Detect System.
 cpds-agent是为CPDS(Container Problem Detect System)容器故障检测系统开发的信息采集组件
