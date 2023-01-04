@@ -203,6 +203,7 @@ int get_netlink_status(const char *if_name)
 int get_multiple_netlink()
 {
     GList *list = NULL;
+    NetData *net;
     const char *stat;
     struct ifaddrs *ifap, *ifa;
     struct sockaddr_in6 *sa;
@@ -223,7 +224,12 @@ int get_multiple_netlink()
             ret = get_netlink_status(ifa->ifa_name);
             if (ret != RESULT_FAILED)
             {
-                NetData *net = (NetData *)malloc(sizeof(NetData));
+                net = (NetData *)malloc(sizeof(NetData));
+                if (net == NULL)
+                {
+                    CPDS_ZLOG_ERROR("malloc failed");
+                    return RESULT_FAILED;
+                }
                 net->name = ifa->ifa_name;
                 net->stat = ret;
                 list = g_list_append(list, net);
@@ -242,7 +248,12 @@ int get_multiple_netlink()
             ret = get_netlink_status(ifa->ifa_name);
             if (ret != RESULT_FAILED)
             {
-                NetData *net = (NetData *)malloc(sizeof(NetData));
+                net = (NetData *)malloc(sizeof(NetData));
+                if (net == NULL)
+                {
+                    CPDS_ZLOG_ERROR("malloc failed");
+                    return RESULT_FAILED;
+                }
                 net->name = ifa->ifa_name;
                 net->stat = ret;
                 list = g_list_append(list, net);
@@ -253,6 +264,16 @@ int get_multiple_netlink()
             }
         }
     }
+
+    output_list(list);
+    GList *ls = g_list_first(list);
+    while (ls != NULL)
+    {
+        NetData *release = (NetData *)ls->data;
+        free(release);
+        ls = g_list_next(ls);
+    }        
+    g_list_free(list);
 
     freeifaddrs(ifap);
     return RESULT_SUCCESS;
