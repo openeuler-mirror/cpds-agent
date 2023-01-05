@@ -284,17 +284,17 @@ void output_list(GList *plist)
 {
     int len;
     len = g_list_length(plist);
-    if(ret == 0)
+    if(len == 0)
     {
        CPDS_ZLOG_ERROR("empty table");
        return;
     }
-    ZLOG_LEVEL_DEBUG("lenth=%d\n", len);
+    CPDS_ZLOG_DEBUG("lenth=%d\n", len);
 
     GList *ls = g_list_first(plist);
     while (ls != NULL)
     {
-        ZLOG_LEVEL_DEBUG("%s %d\n", ((NetData *)ls->data)->name, ((NetData *)ls->data)->stat);
+        CPDS_ZLOG_DEBUG("%s %d\n", ((NetData *)ls->data)->name, ((NetData *)ls->data)->stat);
         ls = g_list_next(ls);
     }
     
