@@ -199,6 +199,19 @@ int get_netlink_status(const char *if_name)
     return netcard.data;
 }
 
+void free_netlist(GList *plist)
+{
+    GList *ls = g_list_first(plist);
+    while (ls != NULL)
+    {
+        NetData *release = (NetData *)ls->data;
+        free(release);
+        ls = g_list_next(ls);
+    }
+    g_list_free(plist);
+    plist = NULL;
+}
+
 //TODO:该版本这里为获取多张网卡名功能测试代码，后须会完善获取状态并存入链表中
 int get_multiple_netlink()
 {
@@ -266,14 +279,7 @@ int get_multiple_netlink()
     }
 
     output_list(list);
-    GList *ls = g_list_first(list);
-    while (ls != NULL)
-    {
-        NetData *release = (NetData *)ls->data;
-        free(release);
-        ls = g_list_next(ls);
-    }        
-    g_list_free(list);
+    free_netlist(list);
 
     freeifaddrs(ifap);
     return RESULT_SUCCESS;
