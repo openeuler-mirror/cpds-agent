@@ -13,6 +13,7 @@ int main()
 {
     sys_t sys;
     int res;
+    int val = RESULT_FAILED;
     pthread_t getinfo_tid, pushinfo_tid;
     pthread_mutex_init(&mut, NULL);
 
@@ -22,27 +23,31 @@ int main()
     {
        CPDS_ZLOG_ERROR("cpds-zlog failed to be initialized");
        CPDS_ZLOG_FINI();
-       return RESULT_FAILED;
+       goto out;
     }
 
-    if(SQLITE_OK !=init_database())
+    if(SQLITE_OK != init_database())
     {
        CPDS_ZLOG_ERROR("failed to initialize the database");
-       return RESULT_FAILED;
+       goto clean_log;
     }
 
     res = pthread_create(&getinfo_tid, NULL, get_sysinfo, (void *)&sys);
     if (res != 0)
     {
        CPDS_ZLOG_ERROR("pthread creation failure");
-       return RESULT_FAILED; 
+       goto clean_log; 
     }
     res = pthread_create(&pushinfo_tid, NULL, push_sysinfo, (void *)&sys);
     if( res != 0)
     {
        CPDS_ZLOG_ERROR("pthread creation failure");
-       return RESULT_FAILED;
+       goto clean_log;
     }
-
-    return RESULT_SUCCESS;
+   
+    val = RESULT_SUCCESS;
+clean_log:
+    CPDS_ZLOG_FINI();
+out:
+    return val;
 }
