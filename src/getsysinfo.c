@@ -212,6 +212,27 @@ void free_netlist(GList *plist)
     plist = NULL;
 }
 
+//TODO:该版本这里为测试打印数据成功加入链表的代码，后续会直接往数据库中写入
+void output_list(GList *plist)
+{
+    int len;
+    len = g_list_length(plist);
+    if(len == 0)
+    {
+       CPDS_ZLOG_ERROR("empty table");
+       return;
+    }
+    CPDS_ZLOG_DEBUG("lenth=%d\n", len);
+
+    GList *ls = g_list_first(plist);
+    while (ls != NULL)
+    {
+        CPDS_ZLOG_DEBUG("%s %d\n", ((NetData *)ls->data)->name, ((NetData *)ls->data)->stat);
+        ls = g_list_next(ls);
+    }
+    
+}
+
 //TODO:该版本这里为获取多张网卡名功能测试代码，后须会完善获取状态并存入链表中
 int get_multiple_netlink()
 {
@@ -283,25 +304,4 @@ int get_multiple_netlink()
 
     freeifaddrs(ifap);
     return RESULT_SUCCESS;
-}
-
-//TODO:该版本这里为测试打印数据成功加入链表的代码，后续会直接往数据库中写入
-void output_list(GList *plist)
-{
-    int len;
-    len = g_list_length(plist);
-    if(len == 0)
-    {
-       CPDS_ZLOG_ERROR("empty table");
-       return;
-    }
-    CPDS_ZLOG_DEBUG("lenth=%d\n", len);
-
-    GList *ls = g_list_first(plist);
-    while (ls != NULL)
-    {
-        CPDS_ZLOG_DEBUG("%s %d\n", ((NetData *)ls->data)->name, ((NetData *)ls->data)->stat);
-        ls = g_list_next(ls);
-    }
-    
 }
