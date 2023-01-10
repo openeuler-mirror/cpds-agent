@@ -17,7 +17,7 @@ int main()
     pthread_t getinfo_tid, pushinfo_tid;
     pthread_mutex_init(&mut, NULL);
 
-    CPDS_ZLOG_INFO("Welcome in cpds-agent version:1.0.0");
+   
     res = CPDS_ZLOG_INIT(CONFIG_PATH,CPDSCLASS_NAME);
     if(res)
     {
@@ -25,6 +25,8 @@ int main()
        CPDS_ZLOG_FINI();
        goto out;
     }
+
+    CPDS_ZLOG_INFO("Welcome in cpds-agent");
 
     if(SQLITE_OK != init_database())
     {
