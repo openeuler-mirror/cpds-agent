@@ -17,8 +17,7 @@ int create_sysinfotable()
 {
     char *errmsg = NULL;
 
-    if (SQLITE_OK != sqlite3_exec(pdb, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg))
-    {
+    if (SQLITE_OK != sqlite3_exec(pdb, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg)) {
         CPDS_ZLOG_ERROR("table creation error %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
@@ -31,14 +30,12 @@ int init_database()
 {
     CPDS_ZLOG_INFO("initializing database");
 
-    if(sqlite3_open("test.db", &pdb) != SQLITE_OK)
-    {
+    if (sqlite3_open("test.db", &pdb) != SQLITE_OK) {
        CPDS_ZLOG_ERROR("open pdb failed:%s", sqlite3_errmsg(pdb));
        return RESULT_FAILED; 
     }
 
-    if (SQLITE_OK != create_sysinfotable(pdb))
-    {
+    if (SQLITE_OK != create_sysinfotable(pdb)) {
        CPDS_ZLOG_ERROR("table creation failure");
        sqlite3_close(pdb);
        return RESULT_FAILED;
@@ -56,8 +53,7 @@ int add_record(char *name, float data)
     CPDS_ZLOG_DEBUG("add_record name data: %s %f", name, data);
 
     sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
-    if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
-    {
+    if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg)) {
         CPDS_ZLOG_ERROR("data insertion failure %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
@@ -74,8 +70,7 @@ int delete_record(int id)
     CPDS_ZLOG_DEBUG("delete_record id: %d", id);
 
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
-    if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg))
-    {
+    if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg)) {
         CPDS_ZLOG_ERROR("deleting error %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
@@ -90,17 +85,14 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     int i;
     flag = (int *)para;
 
-    if (0 == *flag)
-    {
+    if (0 == *flag) {
         *flag = 1;
         CPDS_ZLOG_DEBUG("column number is:%d", ncol);
-        for (i = 0; i < ncol; i++)
-        {
+        for (i = 0; i < ncol; i++) {
             CPDS_ZLOG_DEBUG("%10s", col_name[i]);
         }
     }
-    for (i = 0; i < ncol; i++) 
-    {
+    for (i = 0; i < ncol; i++) {
         CPDS_ZLOG_DEBUG("%10s", col_val[i]);
     }
     return RESULT_SUCCESS;
@@ -111,8 +103,7 @@ int inquire_uscb()
     char *errmsg = NULL;
     int flag = 0;
 
-    if (SQLITE_OK != sqlite3_exec(pdb, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg))
-    {
+    if (SQLITE_OK != sqlite3_exec(pdb, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg)) {
         CPDS_ZLOG_ERROR("failure to select %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
