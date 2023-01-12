@@ -31,6 +31,18 @@ typedef struct LNode
     data_t    stat;
 }NetData;
 
+typedef struct cpu_info        
+{
+    char name[20];                  
+    unsigned int user;              
+    unsigned int nice;              
+    unsigned int system;           
+    unsigned int idle;             
+    unsigned int iowait;
+    unsigned int irq;
+    unsigned int softirq;
+}_cpu_info;
+
 void* get_sysinfo(void* arg);
 void* push_sysinfo(void* arg);
 float get_syscpu_usage();
