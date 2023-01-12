@@ -11,7 +11,7 @@ FILEPATH = src/*.c
 COPYPATH = /usr/bin
 SERVICEFILE = config/cpds-agent.service
 SYSTEMDPATH = /usr/lib/systemd/system
-LOGCONFILE = config/cpds_log.config
+LOGCONFILE = config/cpds_log.conf
 LOGCONFTARGET = /etc/cpds/cpds-agent
 all:
 	$(CC) ${FILEPATH} -o ${TARGET} ${LIBS}
