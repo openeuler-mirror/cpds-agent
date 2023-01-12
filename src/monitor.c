@@ -19,29 +19,25 @@ int main()
 
    
     res = CPDS_ZLOG_INIT(CONFIG_PATH,CPDSCLASS_NAME);
-    if(res)
-    {
+    if (res) {
        printf("cpds-zlog failed to be initialized");
        goto out;
     }
 
     CPDS_ZLOG_INFO("Welcome in cpds-agent");
 
-    if(SQLITE_OK != init_database())
-    {
+    if (SQLITE_OK != init_database()) {
        CPDS_ZLOG_ERROR("failed to initialize the database");
        goto clean_log;
     }
 
     res = pthread_create(&getinfo_tid, NULL, get_sysinfo, (void *)&sys);
-    if (res != 0)
-    {
+    if (res != 0) {
        CPDS_ZLOG_ERROR("pthread creation failure");
        goto clean_log; 
     }
     res = pthread_create(&pushinfo_tid, NULL, push_sysinfo, (void *)&sys);
-    if( res != 0)
-    {
+    if (res != 0) {
        CPDS_ZLOG_ERROR("pthread creation failure");
        goto clean_log;
     }
