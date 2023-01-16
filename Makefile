@@ -29,5 +29,6 @@ uninstall:
 	systemctl stop  ${TARGET} >/dev/null 2>&1
 	-@rm -rf ${SYSTEMDPATH}/${TARGET}.service >/dev/null 2>&1
 	-@rm -rf ${COPYPATH}/${TARGET} >/dev/null 2>&1
+	-@rm -rf ${LOGCONFTARGET} >/dev/null 2>&1
 clean:
 	-@rm -rf ${TARGET} >/dev/null 2>&1
