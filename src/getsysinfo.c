@@ -262,7 +262,7 @@ int get_multiple_netlink()
     struct sockaddr_in *sa4;
     char addr[INET6_ADDRSTRLEN];
     char addr4[INET_ADDRSTRLEN];
-    int ret;
+    int ret, val=RESULT_FAILED;
 
     getifaddrs(&ifap);
     for (ifa = ifap; ifa; ifa = ifa->ifa_next)
@@ -280,7 +280,7 @@ int get_multiple_netlink()
                 if (net == NULL)
                 {
                     CPDS_ZLOG_ERROR("malloc failed");
-                    return RESULT_FAILED;
+                    goto out;
                 }
                 net->name = ifa->ifa_name;
                 net->stat = ret;
@@ -304,7 +304,7 @@ int get_multiple_netlink()
                 if (net == NULL)
                 {
                     CPDS_ZLOG_ERROR("malloc failed");
-                    return RESULT_FAILED;
+                    goto out;
                 }
                 net->name = ifa->ifa_name;
                 net->stat = ret;
@@ -320,6 +320,10 @@ int get_multiple_netlink()
     output_list(list);
     free_netlist(list);
 
+    val = RESULT_SUCCESS;
+
+out:
     freeifaddrs(ifap);
-    return RESULT_SUCCESS;
+    return val;
+
 }
