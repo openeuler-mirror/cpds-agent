@@ -81,6 +81,41 @@ double calc_cpu_occupy (_cpu_info *start, _cpu_info *end)
     return cpu_use;
 }
 
+int get_cpu_data (_cpu_info *data)
+{
+    FILE *fp;
+    char buf[256];
+    int nscan = 0, val = RESULT_FAILED;
+
+    fp = fopen ("/proc/stat", "r");
+    if (NULL == fp) {
+        CPDS_ZLOG_ERROR("fopen error - '%s'", strerror(errno));
+        goto open_err;
+    }
+
+    if (fgets(buf, sizeof(buf), fp) == NULL) {
+        CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
+        goto out;
+    }
+  
+    nscan = sscanf(buf, "%s %u %u %u %u %u %u %u", data->name, &data->user, &data->nice, &data->system, &data->idle, &data->iowait, &data->irq, &data->softirq);
+    if (nscan != 8)
+    {
+        if (nscan == -1)
+            CPDS_ZLOG_ERROR("nscan error - '%s'", strerror(errno));
+        else
+            CPDS_ZLOG_ERROR("field conversion failure");
+        goto out;
+    }
+
+    val = RESULT_SUCCESS;
+out:
+    fclose(fp);
+open_err:
+    return val;
+    
+}
+
 float get_syscpu_usage()
 {
     FILE *fp;
