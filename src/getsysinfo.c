@@ -116,6 +116,32 @@ open_err:
     
 }
 
+int get_cpu_usage(double *cpu_usage)
+{
+    _cpu_info cpu_start_stat;
+    _cpu_info cpu_end_stat;
+    int ret, val = RESULT_FAILED;
+
+    ret = get_cpu_data(&cpu_start_stat);
+    if (ret < 0) {
+        CPDS_ZLOG_ERROR("failed to obtain the start status");
+        goto out;
+    }
+    sleep(1);
+    ret = get_cpu_data(&cpu_end_stat);
+    if (ret < 0) {
+        CPDS_ZLOG_ERROR("failed to obtain the end status");
+        goto out;
+    }
+
+    *cpu_usage = calc_cpu_occupy(&cpu_start_stat, &cpu_end_stat);
+
+    val = RESULT_SUCCESS;
+out:
+    return val;
+
+}
+
 float get_syscpu_usage()
 {
     FILE *fp;
