@@ -142,6 +142,28 @@ out:
 
 }
 
+int get_disk_usage(float *disk_usage)
+{
+    char buf[] = "/";
+    struct statfs st_statfs;
+    int lsts;
+
+    memset(&st_statfs, 0, sizeof(struct statfs));
+    lsts = 0;
+
+    lsts = statfs(buf, &st_statfs);
+    if (0 != lsts) {
+        CPDS_ZLOG_ERROR("statfs fail - '%s'", strerror(errno));
+        return RESULT_FAILED;
+    }
+
+    *disk_usage = (st_statfs.f_blocks - st_statfs.f_bfree) * 100 / (st_statfs.f_blocks - st_statfs.f_bfree + st_statfs.f_bavail) + 1;
+    
+    CPDS_ZLOG_DEBUG("diskusage: %4.2f", *disk_usage);
+
+    return RESULT_SUCCESS;
+}
+
 float get_syscpu_usage()
 {
     FILE *fp;
