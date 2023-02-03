@@ -26,7 +26,7 @@ typedef int  data_t;
 typedef char str_t;
 typedef struct LNode {
     str_t   *name;
-    data_t    stat;
+    data_t   stat;
 }NetData;
 
 typedef struct cpu_info {
