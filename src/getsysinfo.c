@@ -33,7 +33,7 @@ void* get_sysinfo(void* arg)
     while (1)
     {
         sleep(1);
-        while (((sys->CpuUsage = get_syscpu_usage()) < 0) || ((sys->DiskUsage = get_sysdisk_usage()) < 0) || ((sys->IoWriteSize = get_sysio_wbs() < 0)))
+        while (((sys->CpuUsage = get_syscpu_usage()) < 0) || ((sys->diskusage = get_sysdisk_usage()) < 0) || ((sys->IoWriteSize = get_sysio_wbs() < 0)))
         {
             if (count == 0)
             {
