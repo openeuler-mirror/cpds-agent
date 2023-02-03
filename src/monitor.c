@@ -20,7 +20,7 @@ int main()
    
     res = CPDS_ZLOG_INIT(CONFIG_PATH,CPDSCLASS_NAME);
     if (res) {
-       printf("cpds-zlog failed to be initialized");
+       printf("zlog failed to be initialized");
        goto out;
     }
 
