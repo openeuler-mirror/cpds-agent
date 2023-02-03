@@ -6,4 +6,4 @@
 #define CPDS_ZLOG_DEBUG(...)                     dzlog_debug( __VA_ARGS__)
 #define CPDS_ZLOG_WARN(...)                      dzlog_warn( __VA_ARGS__)
 #define CPDS_ZLOG_ERROR(...)                     dzlog_error( __VA_ARGS__)
-#define CPDS_ZLOG_FATAL(...)                     dzlog_fatal( __VA_ARGS__)
+#define  CPDS_ZLOG_FATAL(...)                     dzlog_fatal( __VA_ARGS__)
