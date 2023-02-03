@@ -18,7 +18,7 @@
 #define CPDSCLASS_NAME       "cpds-agent"
 typedef struct systeminfo {
     double CpuUsage;
-    float DiskUsage;
+    float diskusage;
     float IoWriteSize;
 }sys_t;
 
