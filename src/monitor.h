@@ -11,7 +11,7 @@
 #define WAIT_SECOND         3 
 
 #define FIELD_CPU_USAGE      "CpuUsage"
-#define FIELD_DISK_USAGE     "DiskUsage"
+#define FIELD_DISK_USAGE     "diskusage"
 #define FIELD_IO_WRITESIZE   "IoWriteSize"
 
 #define CONFIG_PATH          "/etc/cpds/cpds-agent/cpds_log.conf"
