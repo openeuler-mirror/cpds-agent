@@ -19,7 +19,7 @@
 typedef struct systeminfo {
     double CpuUsage;
     float DiskUsage;
-    float IoWriteSize;
+    float iowritesize;
 }sys_t;
 
 typedef int  data_t;
