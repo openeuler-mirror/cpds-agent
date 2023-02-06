@@ -31,7 +31,6 @@ int init_database()
        CPDS_ZLOG_ERROR("open pdb failed:%s", sqlite3_errmsg(pdb));
        return RESULT_FAILED; 
     }
-
     if (SQLITE_OK != create_sysinfotable(pdb)) {
        CPDS_ZLOG_ERROR("table creation failure");
        sqlite3_close(pdb);
