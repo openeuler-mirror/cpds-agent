@@ -10,7 +10,7 @@
 #define  CREATE_SYSINFOTABLE         "create table if not exists sysinfotable (id integer primary key, name text, value text);"
 #define  INSERT_INTO_SYSINFOTABLE    "insert into sysinfotable (id, name, value) values (NULL, '%s', '%4.2f');"
 #define  DELETE_IN_TABLE_SYSINFO     "delete from sysinfotable where id = %d;"
-#define SELECT_SYSINFOTABLE         "select * from sysinfotable;"
+#define  SELECT_SYSINFOTABLE         "select * from sysinfotable;"
 
 static sqlite3 *pdb;
 int create_sysinfotable()
