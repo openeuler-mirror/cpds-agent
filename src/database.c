@@ -16,7 +16,6 @@ static sqlite3 *pdb;
 int create_sysinfotable()
 {
     char *errmsg = NULL;
-
     if (SQLITE_OK != sqlite3_exec(pdb, CREATE_SYSINFOTABLE, NULL, NULL, &errmsg)) {
         CPDS_ZLOG_ERROR("table creation error %s", errmsg);
         sqlite3_free(errmsg);
