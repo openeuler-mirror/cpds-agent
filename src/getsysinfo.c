@@ -29,8 +29,7 @@ void *get_sysinfo(void *arg)
     pthread_mutex_lock(&mut); 
     sys_t *sys = (sys_t *)arg;
     int count = 5;
-    while (1)
-    {
+    while (1){
         sleep(1);
         while (((sys->CpuUsage = get_syscpu_usage()) < 0) || ((sys->DiskUsage = get_sysdisk_usage()) < 0) || ((sys->iowritesize = get_sysio_wbs() < 0)))
         {
