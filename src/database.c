@@ -36,7 +36,6 @@ int init_database()
        sqlite3_close(pdb);
        return RESULT_FAILED;
     }
-
     return RESULT_SUCCESS;
 }
 
