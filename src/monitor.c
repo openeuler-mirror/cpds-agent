@@ -27,7 +27,7 @@ int main()
     CPDS_ZLOG_INFO("Welcome in cpds-agent");
 
     if (SQLITE_OK != init_database()) {
-       CPDS_ZLOG_ERROR("failed to initialize the database");
+       CPDS_ZLOG_ERROR("database initialization failed");
        goto clean_log;
     }
 
