@@ -10,7 +10,7 @@
 #define  MAXBUFSIZE          1024
 #define  WAIT_SECOND         3 
 
-#define FIELD_CPU_USAGE      "cpuusage"
+#define  FIELD_CPU_USAGE      "cpuusage"
 #define FIELD_DISK_USAGE     "DiskUsage"
 #define FIELD_IO_WRITESIZE   "iowritesize"
 
