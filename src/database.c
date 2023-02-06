@@ -44,16 +44,13 @@ int add_record(char *name, float data)
 {
     char sql[128];
     char *errmsg = NULL;
-
     CPDS_ZLOG_DEBUG("add_record name data: %s %f", name, data);
-
     sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
     if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg)) {
         CPDS_ZLOG_ERROR("data insertion failure %s", errmsg);
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
-
     return RESULT_SUCCESS;
 }
 //TODO:该版本这里为功能测试代码输入删除信息，后续会做成接口获取删除信息
@@ -61,7 +58,6 @@ int delete_record(int id)
 {
     char sql[128];
     char *errmsg = NULL;
-
     CPDS_ZLOG_DEBUG("delete_record id: %d", id);
 
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
