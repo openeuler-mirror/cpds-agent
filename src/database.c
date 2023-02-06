@@ -65,7 +65,6 @@ int delete_record(int id)
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
-
     return RESULT_SUCCESS;
 }
 //TODO:该版本这里为功能测试代码,实现回调函数打印表信息的方法，后续会将信息打印到日志里
