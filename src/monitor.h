@@ -10,23 +10,23 @@
 #define MAXBUFSIZE          1024
 #define WAIT_SECOND         3 
 
-#define FIELD_CPU_USAGE      "CpuUsage"
-#define FIELD_DISK_USAGE     "diskusage"
-#define FIELD_IO_WRITESIZE   "IoWriteSize"
+#define FIELD_CPU_USAGE      "cpuusage"
+#define FIELD_DISK_USAGE     "DiskUsage"
+#define FIELD_IO_WRITESIZE   "iowritesize"
 
 #define CONFIG_PATH          "/etc/cpds/cpds-agent/cpds_log.conf"
 #define CPDSCLASS_NAME       "cpds-agent"
 typedef struct systeminfo {
-    double CpuUsage;
+    double cpuusage;
     float DiskUsage;
-    float IoWriteSize;
+    float iowritesize;
 }sys_t;
 
 typedef int  data_t;
 typedef char str_t;
 typedef struct LNode {
     str_t   *name;
-    data_t    stat;
+    data_t   stat;
 }NetData;
 
 typedef struct cpu_info {
