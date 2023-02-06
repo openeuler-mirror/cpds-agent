@@ -23,7 +23,7 @@
 pthread_mutex_t mut;
 
 //TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
-void* get_sysinfo(void* arg)
+void *get_sysinfo(void *arg)
 {
     CPDS_ZLOG_INFO("obtain the system information about the node");
 
@@ -33,7 +33,7 @@ void* get_sysinfo(void* arg)
     while (1)
     {
         sleep(1);
-        while (((sys->CpuUsage = get_syscpu_usage()) < 0) || ((sys->DiskUsage = get_sysdisk_usage()) < 0) || ((sys->IoWriteSize = get_sysio_wbs() < 0)))
+        while (((sys->CpuUsage = get_syscpu_usage()) < 0) || ((sys->DiskUsage = get_sysdisk_usage()) < 0) || ((sys->iowritesize = get_sysio_wbs() < 0)))
         {
             if (count == 0)
             {
@@ -52,7 +52,7 @@ void *push_sysinfo(void *arg)
     pthread_mutex_lock(&mut);
     sys_t *sys = (sys_t *)arg;
     int count=5;
-    while (((add_record( FIELD_CPU_USAGE, sys->CpuUsage)) < 0) || ((add_record(FIELD_DISK_USAGE, sys->DiskUsage)) < 0) || ((add_record(FIELD_IO_WRITESIZE, sys->iowritesize)) < 0))
+    while (((add_record( FIELD_CPU_USAGE, sys->cpuusage)) < 0) || ((add_record(FIELD_DISK_USAGE, sys->DiskUsage)) < 0) || ((add_record(FIELD_IO_WRITESIZE, sys->IoWriteSize)) < 0))
     {
         if (count == 0)
         {
