@@ -2,7 +2,7 @@
 #define MONITOR_H
 
 #define  RESULT_FAILED -1
-#define RESULT_SUCCESS 0
+#define  RESULT_SUCCESS 0
 
 #define SYS_DISK_BUFF_LEN   256
 #define SYS_DISK_NAME_LEN   80
