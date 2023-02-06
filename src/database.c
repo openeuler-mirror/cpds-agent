@@ -44,7 +44,6 @@ int add_record(char *name, float data)
 {
     char sql[128];
     char *errmsg = NULL;
-
     CPDS_ZLOG_DEBUG("add_record name data: %s %f", name, data);
 
     sprintf(sql, INSERT_INTO_SYSINFOTABLE, name, data);
