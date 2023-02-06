@@ -293,7 +293,6 @@ int get_multiple_netlink()
     char addr[INET6_ADDRSTRLEN];
     char addr4[INET_ADDRSTRLEN];
     int ret, val=RESULT_FAILED;
-
     getifaddrs(&ifap);
     for (ifa = ifap; ifa; ifa = ifa->ifa_next)
     {
