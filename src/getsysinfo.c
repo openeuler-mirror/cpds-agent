@@ -68,7 +68,6 @@ double calc_cpu_occupy (_cpu_info *start, _cpu_info *end)
         cpu_use = 100.0 - ((e_idle-s_idle))/(end_total-start_total)*100.00;
     else
         cpu_use = 0;
-
     return cpu_use;
 }
 
