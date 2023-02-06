@@ -260,7 +260,7 @@ void free_netlist(GList *plist)
     plist = NULL;
 }
 
-//TODO:该版本这里为测试打印数据成功加入链表的代码，后续会直接往数据库中写入
+
 void output_list(GList *plist)
 {
     int len;
