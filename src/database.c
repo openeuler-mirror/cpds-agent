@@ -53,7 +53,7 @@ int add_record(char *name, float data)
     }
     return RESULT_SUCCESS;
 }
-//TODO:该版本这里为功能测试代码输入删除信息，后续会做成接口获取删除信息
+
 int delete_record(int id)
 {
     char sql[128];
