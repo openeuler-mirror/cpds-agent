@@ -22,7 +22,7 @@
 
 pthread_mutex_t mut;
 
-//TODO:该版本这里为功能测试代码，后续版本会做一个定时类任务,重新定义方法名称
+
 void *get_sysinfo(void *arg)
 {
     CPDS_ZLOG_INFO("obtain the system information about the node");
