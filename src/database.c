@@ -95,6 +95,5 @@ int inquire_uscb()
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
-
     return RESULT_SUCCESS;
 }
