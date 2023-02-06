@@ -84,8 +84,7 @@ int get_cpu_data (_cpu_info *data)
     if (fgets(buf, sizeof(buf), fp) == NULL) {
         CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
         goto out;
-    }
-  
+    } 
     nscan = sscanf(buf, "%s %u %u %u %u %u %u %u", data->name, &data->user, &data->nice, &data->system, &data->idle, &data->iowait, &data->irq, &data->softirq);
     if (nscan != 8)
     {
