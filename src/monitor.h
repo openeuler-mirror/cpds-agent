@@ -42,8 +42,8 @@ typedef struct cpu_info {
 
 void  *get_sysinfo(void *arg);
 void  *push_sysinfo(void *arg);
-float get_syscpu_usage();
-double get_sysdisk_usage();
-float get_sysio_wbs();
+float  get_syscpu_usage();
+double  get_sysdisk_usage();
+float  get_sysio_wbs();
 
 #endif
