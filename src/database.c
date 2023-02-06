@@ -58,7 +58,6 @@ int delete_record(int id)
 {
     char sql[128];
     char *errmsg = NULL;
-
     CPDS_ZLOG_DEBUG("delete_record id: %d", id);
 
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
