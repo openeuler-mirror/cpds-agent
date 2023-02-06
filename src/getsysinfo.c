@@ -164,7 +164,6 @@ float get_syscpu_usage()
     sscanf(buf, "%s%ld%ld%ld%ld%ld%ld%ld", cpu, &user, &nice, &sys, &idle, &iowait, &irq, &softirq);
     all1 = user + nice + sys + idle + iowait + irq + softirq;
     idle1 = idle;
-
     rewind(fp);
     sleep(1);
     memset(buf, 0, sizeof(buf));
