@@ -214,7 +214,6 @@ float get_sysio_wbs()
         CPDS_ZLOG_ERROR("popen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
-
     //获取执行iostat命令第四行结果
     fgets(buffer, sizeof(buffer), fp);
     fgets(buffer, sizeof(buffer), fp);
