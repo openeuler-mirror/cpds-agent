@@ -67,7 +67,7 @@ int delete_record(int id)
     }
     return RESULT_SUCCESS;
 }
-//TODO:该版本这里为功能测试代码,实现回调函数打印表信息的方法，后续会将信息打印到日志里
+
 int display(void *para, int ncol, char *col_val[], char **col_name)
 {
     int *flag = NULL;
