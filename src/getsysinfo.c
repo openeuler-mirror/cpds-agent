@@ -139,7 +139,6 @@ int get_disk_usage(float *disk_usage)
     }
     *disk_usage = (st_statfs.f_blocks - st_statfs.f_bfree) * 100 / (st_statfs.f_blocks - st_statfs.f_bfree + st_statfs.f_bavail) + 1; 
     CPDS_ZLOG_DEBUG("diskusage: %4.2f", *disk_usage);
-
     return RESULT_SUCCESS;
 }
 
@@ -151,7 +150,6 @@ float get_syscpu_usage()
     long int user, nice, sys, idle, iowait, irq, softirq;
     long int all1, all2, idle1, idle2;
     float usage;
-
     fp = fopen("/proc/stat", "r");
     if (fp == NULL)
     {
