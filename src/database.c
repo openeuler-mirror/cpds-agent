@@ -21,7 +21,6 @@ int create_sysinfotable()
         sqlite3_free(errmsg);
         return RESULT_FAILED;
     }
-
     return RESULT_SUCCESS;
 }
 
