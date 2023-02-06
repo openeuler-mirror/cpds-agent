@@ -119,7 +119,6 @@ int get_cpu_usage(double *cpu_usage)
         goto out;
     }
     *cpu_usage = calc_cpu_occupy(&cpu_start_stat, &cpu_end_stat);
-
     val = RESULT_SUCCESS;
 out:
     return val;
