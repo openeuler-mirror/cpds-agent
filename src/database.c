@@ -90,7 +90,6 @@ int inquire_uscb()
 {
     char *errmsg = NULL;
     int flag = 0;
-
     if (SQLITE_OK != sqlite3_exec(pdb, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg)) {
         CPDS_ZLOG_ERROR("failure to select %s", errmsg);
         sqlite3_free(errmsg);
