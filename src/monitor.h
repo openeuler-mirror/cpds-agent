@@ -12,7 +12,7 @@
 
 #define  FIELD_CPU_USAGE      "cpuusage"
 #define  FIELD_DISK_USAGE     "DiskUsage"
-#define FIELD_IO_WRITESIZE   "iowritesize"
+#define  FIELD_IO_WRITESIZE   "iowritesize"
 
 #define CONFIG_PATH          "/etc/cpds/cpds-agent/cpds_log.conf"
 #define CPDSCLASS_NAME       "cpds-agent"
