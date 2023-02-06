@@ -26,7 +26,6 @@ pthread_mutex_t mut;
 void *get_sysinfo(void *arg)
 {
     CPDS_ZLOG_INFO("obtain the system information about the node");
-
     pthread_mutex_lock(&mut); 
     sys_t *sys = (sys_t *)arg;
     int count = 5;
