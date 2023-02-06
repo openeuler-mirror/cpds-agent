@@ -177,7 +177,6 @@ float get_syscpu_usage()
     sscanf(buf, "%s%ld%ld%ld%ld%ld%ld%ld", cpu, &user, &nice, &sys, &idle, &iowait, &irq, &softirq);
     all2 = user + nice + sys + idle + iowait + irq + softirq;
     idle2 = idle;
-
     //计算cpu使用率
     usage = (float)(all2 - all1 - (idle2 - idle1)) / (all2 - all1) * 100;
 
