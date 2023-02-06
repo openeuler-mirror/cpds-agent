@@ -94,7 +94,6 @@ int get_cpu_data (_cpu_info *data)
             CPDS_ZLOG_ERROR("field conversion failure");
         goto out;
     }
-
     val = RESULT_SUCCESS;
 out:
     fclose(fp);
