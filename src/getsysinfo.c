@@ -155,8 +155,7 @@ float get_syscpu_usage()
         CPDS_ZLOG_ERROR("fopen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
-    if (fgets(buf, sizeof(buf), fp) == NULL)
-    {
+    if (fgets(buf, sizeof(buf), fp) == NULL){
         CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
         fclose(fp);
         return RESULT_FAILED;
