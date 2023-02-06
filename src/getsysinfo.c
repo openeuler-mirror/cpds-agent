@@ -44,7 +44,6 @@ void *get_sysinfo(void *arg)
 void *push_sysinfo(void *arg)
 {
     CPDS_ZLOG_INFO("upload system information to the database");
-    
     pthread_mutex_lock(&mut);
     sys_t *sys = (sys_t *)arg;
     int count=5;
