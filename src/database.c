@@ -73,7 +73,6 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     int *flag = NULL;
     int i;
     flag = (int *)para;
-
     if (0 == *flag) {
         *flag = 1;
         CPDS_ZLOG_DEBUG("column number is:%d", ncol);
@@ -91,7 +90,6 @@ int inquire_uscb()
 {
     char *errmsg = NULL;
     int flag = 0;
-
     if (SQLITE_OK != sqlite3_exec(pdb, SELECT_SYSINFOTABLE, display, (void *)&flag, &errmsg)) {
         CPDS_ZLOG_ERROR("failure to select %s", errmsg);
         sqlite3_free(errmsg);
