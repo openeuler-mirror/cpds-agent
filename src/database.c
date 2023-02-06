@@ -7,7 +7,7 @@
 #include "cpdslog.h"
 #include "../libs/sqlite3/sqlite3.h"
 
-#define CREATE_SYSINFOTABLE         "create table if not exists sysinfotable (id integer primary key, name text, value text);"
+#define  CREATE_SYSINFOTABLE         "create table if not exists sysinfotable (id integer primary key, name text, value text);"
 #define INSERT_INTO_SYSINFOTABLE    "insert into sysinfotable (id, name, value) values (NULL, '%s', '%4.2f');"
 #define DELETE_IN_TABLE_SYSINFO     "delete from sysinfotable where id = %d;"
 #define SELECT_SYSINFOTABLE         "select * from sysinfotable;"
