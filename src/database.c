@@ -59,7 +59,6 @@ int delete_record(int id)
     char sql[128];
     char *errmsg = NULL;
     CPDS_ZLOG_DEBUG("delete_record id: %d", id);
-
     sprintf(sql, DELETE_IN_TABLE_SYSINFO, id);
     if (SQLITE_OK != sqlite3_exec(pdb, sql, NULL, NULL, &errmsg)) {
         CPDS_ZLOG_ERROR("deleting error %s", errmsg);
