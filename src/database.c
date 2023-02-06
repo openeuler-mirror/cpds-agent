@@ -73,7 +73,6 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     int *flag = NULL;
     int i;
     flag = (int *)para;
-
     if (0 == *flag) {
         *flag = 1;
         CPDS_ZLOG_DEBUG("column number is:%d", ncol);
