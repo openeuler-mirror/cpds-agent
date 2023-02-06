@@ -39,7 +39,7 @@ int init_database()
     return RESULT_SUCCESS;
 }
 
-//TODO:该版本这里为功能测试代码，后续会根据传入数据信息来，完善功能和统一规范日志信息命名。
+
 int add_record(char *name, float data)
 {
     char sql[128];
