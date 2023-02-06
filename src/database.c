@@ -27,7 +27,6 @@ int create_sysinfotable()
 int init_database()
 {
     CPDS_ZLOG_INFO("initializing database");
-
     if (sqlite3_open("test.db", &pdb) != SQLITE_OK) {
        CPDS_ZLOG_ERROR("open pdb failed:%s", sqlite3_errmsg(pdb));
        return RESULT_FAILED; 
