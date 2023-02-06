@@ -192,7 +192,6 @@ double get_sysdisk_usage()
     double percentage; 
     memset(&stStatfs, 0, sizeof(struct statfs));
     lSts = 0;
-
     lSts = statfs(buf, &stStatfs);
     if (0 != lSts)
     {
