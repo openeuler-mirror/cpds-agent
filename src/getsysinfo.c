@@ -253,8 +253,7 @@ int get_netlink_status(const char *if_name)
 void free_netlist(GList *plist)
 {
     GList *ls = g_list_first(plist);
-    while (ls != NULL)
-    {
+    while (ls != NULL){
         NetData *release = (NetData *)ls->data;
         free(release);
         ls = g_list_next(ls);
