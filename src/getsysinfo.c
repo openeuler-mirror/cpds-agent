@@ -180,7 +180,6 @@ float get_syscpu_usage()
     //计算cpu使用率
     usage = (float)(all2 - all1 - (idle2 - idle1)) / (all2 - all1) * 100;
     CPDS_ZLOG_DEBUG("cpdsusage: %4.2f", usage);
-
     fclose(fp);
     return usage;
 }
