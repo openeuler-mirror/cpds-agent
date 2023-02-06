@@ -85,7 +85,7 @@ int display(void *para, int ncol, char *col_val[], char **col_name)
     }
     return RESULT_SUCCESS;
 }
-//TODO:该版本这里为功能测试代码，查询后，用回调函数显示,后续测试完删除
+
 int inquire_uscb()
 {
     char *errmsg = NULL;
