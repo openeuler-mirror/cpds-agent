@@ -169,7 +169,6 @@ float get_syscpu_usage()
     memset(buf, 0, sizeof(buf));
     cpu[0] = '\0';
     user = nice = sys = idle = iowait = irq = softirq = 0;
-
     if (fgets(buf, sizeof(buf), fp) == NULL)
     {
         CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
