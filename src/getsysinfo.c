@@ -231,7 +231,6 @@ int get_netlink_status(const char *if_name)
     int skfd;
     struct ifreq ifr;
     struct ethtool_value netcard;
-
     netcard.cmd = ETHTOOL_GLINK;
     netcard.data = 0; 
     memset(&ifr, 0, sizeof(ifr));
