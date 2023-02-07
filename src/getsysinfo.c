@@ -84,8 +84,7 @@ int get_cpu_data (_cpu_info *data)
     if (fgets(buf, sizeof(buf), fp) == NULL) {
         CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
         goto out;
-    }
-  
+    } 
     nscan = sscanf(buf, "%s %u %u %u %u %u %u %u", data->name, &data->user, &data->nice, &data->system, &data->idle, &data->iowait, &data->irq, &data->softirq);
     if (nscan != 8)
     {
@@ -95,7 +94,6 @@ int get_cpu_data (_cpu_info *data)
             CPDS_ZLOG_ERROR("field conversion failure");
         goto out;
     }
-
     val = RESULT_SUCCESS;
 out:
     fclose(fp);
@@ -109,7 +107,6 @@ int get_cpu_usage(double *cpu_usage)
     _cpu_info cpu_start_stat;
     _cpu_info cpu_end_stat;
     int ret, val = RESULT_FAILED;
-
     ret = get_cpu_data(&cpu_start_stat);
     if (ret < 0) {
         CPDS_ZLOG_ERROR("failed to obtain the start status");
