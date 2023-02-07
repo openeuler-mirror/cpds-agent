@@ -198,7 +198,6 @@ double get_sysdisk_usage()
         return RESULT_FAILED;
     }
     percentage = (stStatfs.f_blocks - stStatfs.f_bfree) * 100 / (stStatfs.f_blocks - stStatfs.f_bfree + stStatfs.f_bavail) + 1;
-    
     CPDS_ZLOG_DEBUG("diskusage: %4.2f", percentage);
 
     return percentage;
