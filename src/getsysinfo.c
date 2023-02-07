@@ -224,7 +224,6 @@ float get_sysio_wbs()
     return arr[12];
 }
 
-//TODO:该版本这里为功能测试代码，后须会完善成多网卡
 int get_netlink_status(const char *if_name)
 {
     int skfd;
