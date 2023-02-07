@@ -47,8 +47,7 @@ void *push_sysinfo(void *arg)
     pthread_mutex_lock(&mut);
     sys_t *sys = (sys_t *)arg;
     int count=5;
-    while (((add_record( FIELD_CPU_USAGE, sys->cpuusage)) < 0) || ((add_record(FIELD_DISK_USAGE, sys->DiskUsage)) < 0) || ((add_record(FIELD_IO_WRITESIZE, sys->IoWriteSize)) < 0))
-    {
+    while (((add_record( FIELD_CPU_USAGE, sys->cpuusage)) < 0) || ((add_record(FIELD_DISK_USAGE, sys->DiskUsage)) < 0) || ((add_record(FIELD_IO_WRITESIZE, sys->IoWriteSize)) < 0)){
         if (count == 0)
         {
             break;
