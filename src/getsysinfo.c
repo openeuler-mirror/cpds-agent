@@ -193,12 +193,10 @@ double get_sysdisk_usage()
     memset(&stStatfs, 0, sizeof(struct statfs));
     lSts = 0;
     lSts = statfs(buf, &stStatfs);
-    if (0 != lSts)
-    {
+    if (0 != lSts){
         CPDS_ZLOG_ERROR("statfs faile");
         return RESULT_FAILED;
     }
-
     percentage = (stStatfs.f_blocks - stStatfs.f_bfree) * 100 / (stStatfs.f_blocks - stStatfs.f_bfree + stStatfs.f_bavail) + 1;
     
     CPDS_ZLOG_DEBUG("diskusage: %4.2f", percentage);
