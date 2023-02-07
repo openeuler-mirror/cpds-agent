@@ -210,12 +210,10 @@ float get_sysio_wbs()
     char a[20];
     float arr[20];
     FILE *fp = popen(cmd, "r");
-    if (!fp)
-    {
+    if (!fp){
         CPDS_ZLOG_ERROR("popen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
-
     //获取执行iostat命令第四行结果
     fgets(buffer, sizeof(buffer), fp);
     fgets(buffer, sizeof(buffer), fp);
