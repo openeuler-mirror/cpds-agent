@@ -209,7 +209,6 @@ float get_sysio_wbs()
     char buffer[MAXBUFSIZE];
     char a[20];
     float arr[20];
-
     FILE *fp = popen(cmd, "r");
     if (!fp)
     {
