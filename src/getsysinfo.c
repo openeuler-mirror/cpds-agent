@@ -132,7 +132,6 @@ int get_disk_usage(float *disk_usage)
     int lsts;
     memset(&st_statfs, 0, sizeof(struct statfs));
     lsts = 0;
-
     lsts = statfs(buf, &st_statfs);
     if (0 != lsts) {
         CPDS_ZLOG_ERROR("statfs fail - '%s'", strerror(errno));
