@@ -130,7 +130,6 @@ int get_disk_usage(float *disk_usage)
     char buf[] = "/";
     struct statfs st_statfs;
     int lsts;
-
     memset(&st_statfs, 0, sizeof(struct statfs));
     lsts = 0;
 
