@@ -151,8 +151,7 @@ float get_syscpu_usage()
     long int all1, all2, idle1, idle2;
     float usage;
     fp = fopen("/proc/stat", "r");
-    if (fp == NULL)
-    {
+    if (fp == NULL){
         CPDS_ZLOG_ERROR("fopen error - '%s'", strerror(errno));
         return RESULT_FAILED;
     }
