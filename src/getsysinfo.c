@@ -240,7 +240,6 @@ int get_netlink_status(const char *if_name)
         CPDS_ZLOG_ERROR("create socket fail");
         return RESULT_FAILED;
     }
-
     if (ioctl(skfd, SIOCETHTOOL, &ifr) == -1)
     {
         CPDS_ZLOG_ERROR("failed to obtain the NIC status");
