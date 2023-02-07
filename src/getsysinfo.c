@@ -76,13 +76,11 @@ int get_cpu_data (_cpu_info *data)
     FILE *fp;
     char buf[256];
     int nscan = 0, val = RESULT_FAILED;
-
     fp = fopen ("/proc/stat", "r");
     if (NULL == fp) {
         CPDS_ZLOG_ERROR("fopen error - '%s'", strerror(errno));
         goto open_err;
     }
-
     if (fgets(buf, sizeof(buf), fp) == NULL) {
         CPDS_ZLOG_ERROR("fgets error - '%s'", strerror(errno));
         goto out;
