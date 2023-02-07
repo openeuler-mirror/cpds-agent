@@ -246,7 +246,6 @@ int get_netlink_status(const char *if_name)
         close(skfd);
         return RESULT_FAILED;
     }
-
     close(skfd);
     return netcard.data;
 }
