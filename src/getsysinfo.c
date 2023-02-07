@@ -118,9 +118,7 @@ int get_cpu_usage(double *cpu_usage)
         CPDS_ZLOG_ERROR("failed to obtain the end status");
         goto out;
     }
-
     *cpu_usage = calc_cpu_occupy(&cpu_start_stat, &cpu_end_stat);
-
     val = RESULT_SUCCESS;
 out:
     return val;
