@@ -160,7 +160,6 @@ float get_syscpu_usage()
         fclose(fp);
         return RESULT_FAILED;
     }
-
     //cpu名称、用户态时间、nice用户态时间、内核态时间、空闲时间、I/O等待时间、硬中断时间、软中断时间
     sscanf(buf, "%s%ld%ld%ld%ld%ld%ld%ld", cpu, &user, &nice, &sys, &idle, &iowait, &irq, &softirq);
     all1 = user + nice + sys + idle + iowait + irq + softirq;
