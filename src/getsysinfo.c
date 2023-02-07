@@ -59,7 +59,6 @@ void *push_sysinfo(void *arg)
 double calc_cpu_occupy (_cpu_info *start, _cpu_info *end)
 {
     double start_total, end_total, e_idle, s_idle, cpu_use;
-
     //用户态时间、nice用户态时间、内核态时间、空闲时间、I/O等待时间、硬中断时间、软中断时间
     start_total = (double) (start->user + start->nice + start->system + start->idle + start->softirq + start->iowait + start->irq);
     end_total = (double) (end->user + end->nice + end->system + end->idle + end->softirq + end->iowait + end->irq);
