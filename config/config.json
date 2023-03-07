@@ -1,0 +1,4 @@
+{
+    "expose_port":"20001",
+    "log_cfg_file": "/etc/cpds/agent/log.conf"
+}
