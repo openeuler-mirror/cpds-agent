@@ -253,7 +253,9 @@ int prom_metric_formatter_load_metrics(prom_metric_formatter_t *self, prom_map_t
       const char *metric_name = (const char *)current_node->item;
       prom_metric_t *metric = (prom_metric_t *)prom_map_get(metrics, metric_name);
       if (metric == NULL) return 1;
+      if (pthread_rwlock_rdlock(metric->rwlock) != 0) return 1;
       r = prom_metric_formatter_load_metric(self, metric);
+      if (pthread_rwlock_unlock(metric->rwlock) != 0) return 1;
       if (r) return r;
     }
   }
