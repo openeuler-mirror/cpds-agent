@@ -236,3 +236,64 @@ prom_metric_sample_histogram_t *prom_metric_sample_histogram_from_labels(prom_me
   prom_free((void *)l_value);
   return sample;
 }
+
+int prom_metric_remove_sample_from_labels(prom_metric_t *self, const char **label_values)
+{
+  PROM_ASSERT(self != NULL);
+  if (self == NULL)
+  return 0;
+
+  int ret = -1;
+  char *l_value = NULL;
+
+  if (pthread_rwlock_wrlock(self->rwlock) != 0) {
+    PROM_LOG(PROM_PTHREAD_RWLOCK_LOCK_ERROR);
+    return -1;
+  }
+
+  // Get l_value
+  ret = prom_metric_formatter_load_l_value(self->formatter, self->name, NULL, self->label_key_count, self->label_keys,
+                                         label_values);
+  if (ret != 0) {
+    goto out;
+  }
+
+  // This must be freed before returning
+  l_value = prom_metric_formatter_dump(self->formatter);
+  if (l_value == NULL) {
+    goto out;
+  }
+
+  // Delete sample
+  ret = prom_map_delete(self->samples, l_value);
+
+out:
+  pthread_rwlock_unlock(self->rwlock);
+  if (l_value)
+    prom_free((void *)l_value);
+  return ret;
+}
+
+int prom_metric_clear_samples(prom_metric_t *self)
+{
+  int ret = 0;
+
+  if (pthread_rwlock_wrlock(self->rwlock) != 0) {
+    PROM_LOG(PROM_PTHREAD_RWLOCK_LOCK_ERROR);
+    return -1;
+  }
+
+  if (self != NULL)
+    ret = prom_map_destroy(self->samples);
+  if (ret == 0) {
+    self->samples = prom_map_new();
+    if (self->type == PROM_HISTOGRAM) {
+      prom_map_set_free_value_fn(self->samples, &prom_metric_sample_histogram_free_generic);
+    } else {
+      prom_map_set_free_value_fn(self->samples, &prom_metric_sample_free_generic);
+    }
+  }
+
+  pthread_rwlock_unlock(self->rwlock);
+  return ret;
+}

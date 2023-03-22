@@ -119,4 +119,18 @@ int prom_counter_add(prom_counter_t *self, double r_value, const char **label_va
  */
 int prom_counter_set(prom_counter_t *self, double r_value, const char **label_values);
 
+/**
+ * @brief remove the prom_counter_t* with specified labels
+ * @param self The target prom_counter_t*
+ * @return A non-zero integer value upon failure.
+*/
+int prom_counter_remove(prom_counter_t *self, const char **label_values);
+
+/**
+ * @brief clear all the samples for the prom_counter_t*
+ * @param self The target prom_counter_t*
+ * @return A non-zero integer value upon failure.
+*/
+int prom_counter_clear(prom_counter_t *self);
+
 #endif  // PROM_COUNTER_H

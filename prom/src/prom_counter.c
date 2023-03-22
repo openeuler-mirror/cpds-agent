@@ -76,3 +76,25 @@ int prom_counter_set(prom_counter_t *self, double r_value, const char **label_va
   if (sample == NULL) return 1;
   return prom_metric_sample_set(sample, r_value);
 }
+
+int prom_counter_remove(prom_counter_t *self, const char **label_values)
+{
+  PROM_ASSERT(self != NULL);
+  if (self == NULL) return 1;
+  if (self->type != PROM_COUNTER) {
+    PROM_LOG(PROM_METRIC_INCORRECT_TYPE);
+    return 1;
+  }
+  return prom_metric_remove_sample_from_labels(self, label_values);
+}
+
+int prom_counter_clear(prom_counter_t *self)
+{
+  PROM_ASSERT(self != NULL);
+  if (self == NULL) return 1;
+  if (self->type != PROM_COUNTER) {
+    PROM_LOG(PROM_METRIC_INCORRECT_TYPE);
+    return 1;
+  }
+  return prom_metric_clear_samples(self);
+}

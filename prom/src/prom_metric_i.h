@@ -42,4 +42,14 @@ int prom_metric_destroy_generic(void *item);
  */
 void prom_metric_free_generic(void *item);
 
+/**
+ * @brief API PRIVATE Remove sample in a *prom_metric
+ */
+int prom_metric_remove_sample_from_labels(prom_metric_t *self, const char **label_values);
+
+/**
+ * @brief API PRIVATE Clear all samples in a *prom_metric
+ */
+int prom_metric_clear_samples(prom_metric_t *self);
+
 #endif  // PROM_METRIC_I_INCLUDED

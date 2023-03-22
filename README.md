@@ -10,11 +10,12 @@ cpds-agent是为CPDS(Container Problem Detect System)容器故障检测系统开
 本组件根据cpds-detetor(异常检测组件)需要的数据进行相应采集。
 
 #### 从源码编译
-`cpds-detector`只支持Linux。
+`cpds-agent`只支持Linux。
 
 编译依赖：
 * cmake: 版本不低于3.14.5
 * libmicrohttpd
+* libsystemd
 * glib-2.0
 
 下载cpds-agent并编译：

@@ -29,6 +29,9 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+# 仅在调试时开启
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
+
 project(cpds-agent VERSION ${Version})
 message(STATUS "${PROJECT_NAME} version: ${Version}")
 
@@ -103,6 +106,7 @@ target_link_libraries(${TARGET_BIN}
     prom
     promhttp
     pthread
+    systemd
 )
 
 install(TARGETS ${TARGET_BIN} RUNTIME DESTINATION "/usr/bin")

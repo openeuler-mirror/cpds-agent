@@ -99,3 +99,25 @@ int prom_gauge_set(prom_gauge_t *self, double r_value, const char **label_values
   if (sample == NULL) return 1;
   return prom_metric_sample_set(sample, r_value);
 }
+
+int prom_gauge_remove(prom_gauge_t *self, const char **label_values)
+{
+  PROM_ASSERT(self != NULL);
+  if (self == NULL) return 1;
+  if (self->type != PROM_GAUGE) {
+    PROM_LOG(PROM_METRIC_INCORRECT_TYPE);
+    return 1;
+  }
+  return prom_metric_remove_sample_from_labels(self, label_values);
+}
+
+int prom_gauge_clear(prom_gauge_t *self)
+{
+  PROM_ASSERT(self != NULL);
+  if (self == NULL) return 1;
+  if (self->type != PROM_GAUGE) {
+    PROM_LOG(PROM_METRIC_INCORRECT_TYPE);
+    return 1;
+  }
+  return prom_metric_clear_samples(self);
+}

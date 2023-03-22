@@ -152,4 +152,18 @@ int prom_gauge_sub(prom_gauge_t *self, double r_value, const char **label_values
  */
 int prom_gauge_set(prom_gauge_t *self, double r_value, const char **label_values);
 
+/**
+ * @brief remove the prom_gauge_t* with specified labels
+ * @param self The target prom_gauge_t*
+ * @return A non-zero integer value upon failure.
+*/
+int prom_gauge_remove(prom_gauge_t *self, const char **label_values);
+
+/**
+ * @brief clear all the samples for the prom_gauge_t*
+ * @param self The target prom_gauge_t*
+ * @return A non-zero integer value upon failure.
+*/
+int prom_gauge_clear(prom_gauge_t *self);
+
 #endif  // PROM_GAUGE_H
