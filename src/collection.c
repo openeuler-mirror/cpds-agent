@@ -1,10 +1,11 @@
 #include "collection.h"
+#include "container_collector.h"
 #include "logger.h"
 #include "metric_groups.h"
 #include "prom.h"
 
 static metric_group_list *mgroups = NULL;
-static pthread_t update_thread_id = -1;
+static pthread_t update_thread_id = 0;
 static int done = 0;
 
 metric_group_list *init_all_metrics()
@@ -39,7 +40,7 @@ void free_all_metrics()
 	g_list_free(mgroups);
 }
 
-static void do_update_metrcis(void *arg)
+static void do_update_metrics(void *arg)
 {
 	pthread_testcancel();
 
@@ -60,7 +61,17 @@ static void do_update_metrcis(void *arg)
 
 int start_updating_metrics()
 {
-	int ret = pthread_create(&update_thread_id, NULL, (void *)do_update_metrcis, NULL);
+	int ret = start_updating_container_info();
+	if (ret != 0) {
+		CPDS_LOG_ERROR("Failed to call start_updating_container_info");
+		return ret;
+	}
+
+	ret = pthread_create(&update_thread_id, NULL, (void *)do_update_metrics, NULL);
+	if (ret != 0) {
+		CPDS_LOG_ERROR("Failed to create updating metrics thread");
+		return ret;
+	}
 	return ret;
 }
 
@@ -68,9 +79,12 @@ int stop_updating_metrics()
 {
 	void *status;
 	done = 1;
-	if (stop_updating_metrics > 0) {
+	if (update_thread_id > 0) {
 		pthread_cancel(update_thread_id);
 		pthread_join(update_thread_id, &status);
 	}
+
+	stop_updating_container_info();
+
 	return 0;
 }

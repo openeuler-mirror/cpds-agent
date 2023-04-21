@@ -13,6 +13,7 @@ if [ -z "$1" ]; then
     rm -rf ./build/*
     cd ./build && cmake .. && make
 elif [ "$1" == "install" ]; then
+    mkdir -p /var/log/cpds/agent
     cd ./build && make install
 elif [ "$1" == "uninstall" ]; then
     cd ./build && xargs rm -v < install_manifest.txt

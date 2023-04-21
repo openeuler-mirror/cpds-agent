@@ -1,8 +1,11 @@
+set(ZLOG_PROJ_DIR "${PROJECT_SOURCE_DIR}/zlog")
+set(ZLOG_BUILD_DIR "${PROJECT_BINARY_DIR}/zlog_lib")
+set(ZLOG_LIB "${ZLOG_BUILD_DIR}/libzlog.a")
+
 add_custom_target(zlog_lib ALL
     DEPENDS ${ZLOG_LIB}
 )
 
-# 编译zlog lib
 add_custom_command(OUTPUT ${ZLOG_LIB}
     COMMAND unzip -o "${ZLOG_PROJ_DIR}/zlog.zip" -d ${ZLOG_BUILD_DIR}
     COMMAND cd "${ZLOG_BUILD_DIR}/src" && make

@@ -61,29 +61,37 @@ add_executable(${TARGET_BIN})
 add_subdirectory(prom)
 add_subdirectory(promhttp)
 
-# 子模块：zlog lib
-set(ZLOG_PROJ_DIR "${PROJECT_SOURCE_DIR}/zlog")
-set(ZLOG_BUILD_DIR "${PROJECT_BINARY_DIR}/zlog_lib")
-set(ZLOG_LIB "${ZLOG_BUILD_DIR}/libzlog.a")
-add_subdirectory(zlog)
+# zlog lib
+include(zlog/zlog.cmake)
 add_dependencies(${TARGET_BIN} zlog_lib)
+
+# bpf lib
+include(libbpf/libbpf.cmake)
+
+# eBPF skeleton
+include(src/bpf_stat/bpf_stat.cmake)
+add_dependencies(${TARGET_BIN} bpf_stat_skel)
 
 # 编译选项
 target_compile_options(${TARGET_BIN} 
     PRIVATE
     -DCPDS_AGENT_VERSION="${Version}"
     -DGIT_COMMIT_ID="${commit_id}"
+    -D__${ARCH}__
     "-Wall"
 )
 
 # 源文件
 aux_source_directory("${PROJECT_SOURCE_DIR}/src" MAIN_SRCS)
 aux_source_directory("${PROJECT_SOURCE_DIR}/src/metrics" MAIN_SRCS)
+aux_source_directory("${PROJECT_SOURCE_DIR}/src/container" MAIN_SRCS)
 aux_source_directory("${PROJECT_SOURCE_DIR}/json" JSON_SRCS)
+set(BPF_STAT_SRCS "${BPF_STAT_SRC_DIR}/bpf_stat.c")
 target_sources(${TARGET_BIN}
     PRIVATE
     ${MAIN_SRCS}
     ${JSON_SRCS}
+    ${BPF_STAT_SRCS}
 ) 
 
 # 头文件目录
@@ -91,10 +99,14 @@ target_include_directories(${TARGET_BIN}
     PRIVATE 
     "${PROJECT_SOURCE_DIR}/src"
     "${PROJECT_SOURCE_DIR}/src/metrics"
+    "${PROJECT_SOURCE_DIR}/src/bpf_stat"
+    "${PROJECT_SOURCE_DIR}/src/container"
     "${PROJECT_SOURCE_DIR}/prom/include"
     "${PROJECT_SOURCE_DIR}/promhttp/include"
     "${PROJECT_SOURCE_DIR}/json"
     "${ZLOG_PROJ_DIR}"
+    "${BPF_INCLUDE_DIR}"
+    "${BPF_STAT_INCLUDE_DIR}"
     "${GLIB_INCLUDE_DIRS}"
 )
 
@@ -103,10 +115,13 @@ target_link_libraries(${TARGET_BIN}
     PRIVATE 
     ${GLIB_LIBRARIES}
     ${ZLOG_LIB}
+    ${BPF_LIB}
     prom
     promhttp
     pthread
     systemd
+    elf
+    z
 )
 
 install(TARGETS ${TARGET_BIN} RUNTIME DESTINATION "/usr/bin")

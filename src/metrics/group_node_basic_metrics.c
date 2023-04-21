@@ -34,10 +34,21 @@ static void group_node_basic_destroy()
 static void group_node_basic_update()
 {
 	gchar *os_version = NULL;
-	if (g_file_get_contents("/etc/issue", &os_version, NULL, NULL) == FALSE)
-		CPDS_LOG_WARN("Failed to get /etc/issue content");
-	else
-		g_strstrip(os_version);
+	FILE *fp = fopen("/etc/os-release", "r");
+	if (fp) {
+		char line[200] = {0};
+		const char *pname = "PRETTY_NAME";
+		while (fgets(line, sizeof(line), fp) != NULL) {
+			if (g_ascii_strncasecmp(line, pname, strlen(pname)) != 0)
+				continue;
+			char *p = strtok(line, "\"");
+			p = strtok(NULL, "\"");
+			if (p)
+				os_version = g_strdup(p);
+			break;
+		}
+		fclose(fp);
+	}
 
 	gchar *kernel_version = NULL;
 	if (g_spawn_command_line_sync("uname -r", &kernel_version, NULL, NULL, NULL) == FALSE)
