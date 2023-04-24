@@ -61,5 +61,5 @@ int promhttp_handler(void *cls, struct MHD_Connection *connection, const char *u
 
 struct MHD_Daemon *promhttp_start_daemon(unsigned int flags, unsigned short port, MHD_AcceptPolicyCallback apc,
                                          void *apc_cls) {
-  return MHD_start_daemon(flags, port, apc, apc_cls, &promhttp_handler, NULL, MHD_OPTION_END);
+  return MHD_start_daemon(flags, port, apc, apc_cls, (MHD_AccessHandlerCallback)&promhttp_handler, NULL, MHD_OPTION_END);
 }

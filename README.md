@@ -14,9 +14,13 @@ cpds-agent是为CPDS(Container Problem Detect System)容器故障检测系统开
 
 编译依赖：
 * cmake: 版本不低于3.14.5
+* glib-2.0
 * libmicrohttpd
 * libsystemd
-* glib-2.0
+* clang: 版本不低于10.0
+* bpftool
+* 内核版本 5.10 及以上
+   * 需要开启内核选项 CONFIG_DEBUG_INFO_BTF=y
 
 下载cpds-agent并编译：
 ```
