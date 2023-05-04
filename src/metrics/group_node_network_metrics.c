@@ -17,20 +17,61 @@ static void group_node_network_destroy();
 static void group_node_network_update();
 
 metric_group group_node_network = {.name = "node_network_group",
-                                   .update_period = 30,
+                                   .update_period = 4,
                                    .init = group_node_network_init,
                                    .destroy = group_node_network_destroy,
                                    .update = group_node_network_update};
 
 static prom_gauge_t *cpds_node_network_info;
+static prom_gauge_t *cpds_node_network_up;
+
+static prom_counter_t *cpds_node_network_receive_bytes_total;
+static prom_counter_t *cpds_node_network_receive_drop_total;
+static prom_counter_t *cpds_node_network_receive_errors_total;
+static prom_counter_t *cpds_node_network_receive_packets_total;
+static prom_counter_t *cpds_node_network_transmit_bytes_total;
+static prom_counter_t *cpds_node_network_transmit_drop_total;
+static prom_counter_t *cpds_node_network_transmit_errors_total;
+static prom_counter_t *cpds_node_network_transmit_packets_total;
+
+static prom_counter_t *cpds_node_netstat_tcp_retrans_segs;
+static prom_counter_t *cpds_node_netstat_tcp_out_segs;
 
 static void group_node_network_init()
 {
 	metric_group *grp = &group_node_network;
+	
 	const char *labels[] = {"interface", "mac", "ip", "mask"};
 	size_t label_count = sizeof(labels) / sizeof(labels[0]);
 	cpds_node_network_info = prom_gauge_new("cpds_node_network_info", "node network information", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_node_network_info);
+
+	const char *if_labels[] = {"interface"};
+	size_t if_label_count = sizeof(if_labels) / sizeof(if_labels[0]);
+	cpds_node_network_up = prom_gauge_new("cpds_node_network_up", "node network state (up/down)", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_up);
+
+	cpds_node_network_receive_bytes_total = prom_counter_new("cpds_node_network_receive_bytes_total", "total bytes net interface received", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_receive_bytes_total);
+	cpds_node_network_receive_drop_total = prom_counter_new("cpds_node_network_receive_drop_total", "total dropped packages net interface received", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_receive_drop_total);
+	cpds_node_network_receive_errors_total = prom_counter_new("cpds_node_network_receive_errors_total", "total error packages net interface received", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_receive_errors_total);
+	cpds_node_network_receive_packets_total = prom_counter_new("cpds_node_network_receive_packets_total", "total packages net interface received", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_receive_packets_total);
+	cpds_node_network_transmit_bytes_total = prom_counter_new("cpds_node_network_transmit_bytes_total", "total bytes net interface transmitted", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_transmit_bytes_total);
+	cpds_node_network_transmit_drop_total = prom_counter_new("cpds_node_network_transmit_drop_total", "total dropped packages net interface transmitted", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_transmit_drop_total);
+	cpds_node_network_transmit_errors_total = prom_counter_new("cpds_node_network_transmit_errors_total", "total error packages net interface transmitted", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_transmit_errors_total);
+	cpds_node_network_transmit_packets_total = prom_counter_new("cpds_node_network_transmit_packets_total", "total packages net interface transmitted", if_label_count, if_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_network_transmit_packets_total);
+
+	cpds_node_netstat_tcp_retrans_segs = prom_counter_new("cpds_node_netstat_tcp_retrans_segs", "TCP Retransmitted Segments", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_netstat_tcp_retrans_segs);
+	cpds_node_netstat_tcp_out_segs = prom_counter_new("cpds_node_netstat_tcp_out_segs", "TCP Outgoing Segments", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_netstat_tcp_out_segs);
 }
 
 static void group_node_network_destroy()
@@ -45,13 +86,13 @@ static int update_net_info_metrics(void)
 	int if_num = 0;
 	struct ifreq ifr[200] = {0};
 	struct ifconf ifc;
-	struct ifreq ifrcopy;
 	char mac[20] = {0};
 	char ip[20] = {0};
 	char mask[20] = {0};
 
 	// 每次更新清理一下，避免残留已删除的指标项
 	prom_gauge_clear(cpds_node_network_info);
+	prom_gauge_clear(cpds_node_network_up);
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("socket");
@@ -64,12 +105,16 @@ static int update_net_info_metrics(void)
 	if (!ioctl(fd, SIOCGIFCONF, (char *)&ifc)) {
 		if_num = ifc.ifc_len / sizeof(struct ifreq);
 		while (if_num-- > 0) {
-			// ignore the interface that not up or not running
-			ifrcopy = ifr[if_num];
-			if (ioctl(fd, SIOCGIFFLAGS, &ifrcopy)) {
+			if (ioctl(fd, SIOCGIFFLAGS, &ifr[if_num]) < 0) {
 				CPDS_LOG_ERROR("ioctl: %s [%s:%d]", strerror(errno), __FILE__, __LINE__);
 				continue;
 			}
+
+			// get "up"/"down" state of this interface
+			if (ifr[if_num].ifr_flags & IFF_UP)
+				prom_gauge_set(cpds_node_network_up, 1, (const char *[]){ifr[if_num].ifr_name});
+			else 
+				prom_gauge_set(cpds_node_network_up, 0, (const char *[]){ifr[if_num].ifr_name});
 
 			// get the mac of this interface
 			if (!ioctl(fd, SIOCGIFHWADDR, (char *)(&ifr[if_num]))) {
@@ -116,7 +161,119 @@ static int update_net_info_metrics(void)
 	return 0;
 }
 
+static void update_net_dev_metrics()
+{
+	FILE *fp = NULL;
+	char line[500];
+	char ifname[100];
+
+	// Receive
+	unsigned long long r_bytes;
+	unsigned long long r_packets;
+	unsigned long long r_errs;
+	unsigned long long r_drop;
+	unsigned long long r_fifo;
+	unsigned long long r_frame;
+	unsigned long long r_compressed;
+	unsigned long long r_multicast;
+
+	// Transmit
+	unsigned long long t_bytes;
+	unsigned long long t_packets;
+	unsigned long long t_errs;
+	unsigned long long t_drop;
+	unsigned long long t_fifo;
+	unsigned long long t_colls;
+	unsigned long long t_carrier;
+	unsigned long long t_compressed;
+
+	prom_counter_clear(cpds_node_network_receive_bytes_total);
+	prom_counter_clear(cpds_node_network_receive_drop_total);
+	prom_counter_clear(cpds_node_network_receive_errors_total);
+	prom_counter_clear(cpds_node_network_receive_packets_total);
+	prom_counter_clear(cpds_node_network_transmit_bytes_total);
+	prom_counter_clear(cpds_node_network_transmit_drop_total);
+	prom_counter_clear(cpds_node_network_transmit_errors_total);
+	prom_counter_clear(cpds_node_network_transmit_packets_total);
+
+	fp = fopen("/proc/net/dev", "r");
+	if (fp == NULL) {
+		goto out;
+	}
+
+	int i = 0;
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		if (i++ < 2) // 跳过前两行
+			continue;
+		sscanf(line, "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu", ifname,
+		       &r_bytes, &r_packets, &r_errs, &r_drop, &r_fifo, &r_frame, &r_compressed, &r_multicast, &t_bytes,
+		       &t_packets, &t_errs, &t_drop, &t_fifo, &t_colls, &t_carrier, &t_compressed);
+		char *p = strtok(ifname, ":");
+		if (p) {
+			prom_counter_set(cpds_node_network_receive_bytes_total, r_bytes, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_receive_drop_total, r_drop, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_receive_errors_total, r_errs, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_receive_packets_total, r_packets, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_transmit_bytes_total, t_bytes, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_transmit_drop_total, t_drop, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_transmit_errors_total, t_errs, (const char *[]){ifname});
+			prom_counter_set(cpds_node_network_transmit_packets_total, t_packets, (const char *[]){ifname});
+		}
+	}
+
+out:
+	if (fp)
+		fclose(fp);
+}
+
+static void update_netstat_tcp_metrics()
+{
+	FILE *fp = NULL;
+	char line[500];
+
+	fp = fopen("/proc/net/snmp", "r");
+	if (fp == NULL) {
+		goto out;
+	}
+
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		// 扫描“Tcp”行
+		if (strncmp("Tcp", line, 3) != 0)
+			continue;
+		int i = 0;
+		int num = 0;
+		int idx_OutSegs = -1, idx_RetransSegs = -1;
+		char **header_arr = g_strsplit(line, " ", -1);
+		num = g_strv_length(header_arr);
+		for (i = 0; i < num; i++) {
+			if (strncmp("OutSegs", header_arr[i], strlen("OutSegs")) == 0)
+				idx_OutSegs = i;
+			else if (strncmp("RetransSegs", header_arr[i], strlen("RetransSegs")) == 0)
+				idx_RetransSegs = i;
+		}
+		g_strfreev(header_arr);
+		if (idx_OutSegs < 0 || idx_RetransSegs < 0)
+			break;
+		// 值在下一行对应位置
+		if (fgets(line, sizeof(line), fp) == NULL)
+			break;
+		char **value_arr = g_strsplit(line, " ", -1);
+		num = g_strv_length(value_arr);
+		if (idx_OutSegs < num)
+			prom_counter_set(cpds_node_netstat_tcp_out_segs, g_ascii_strtod(value_arr[idx_OutSegs], NULL), NULL);
+		if (idx_RetransSegs < num)
+			prom_counter_set(cpds_node_netstat_tcp_retrans_segs, g_ascii_strtod(value_arr[idx_RetransSegs], NULL), NULL);
+		g_strfreev(value_arr);
+	}
+
+out:
+	if (fp)
+		fclose(fp);
+}
+
 static void group_node_network_update()
 {
 	update_net_info_metrics();
+	update_net_dev_metrics();
+	update_netstat_tcp_metrics();
 }
