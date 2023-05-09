@@ -27,6 +27,7 @@ static prom_counter_t *cpds_node_disk_io_time_seconds_total;
 static prom_counter_t *cpds_node_disk_io_time_weighted_seconds_total;
 static prom_counter_t *cpds_node_disk_read_bytes_total;
 static prom_counter_t *cpds_node_disk_written_bytes_total;
+static prom_gauge_t *cpds_node_lvm_state;
 
 static void group_node_disk_init()
 {
@@ -65,6 +66,9 @@ static void group_node_disk_init()
 	grp->metrics = g_list_append(grp->metrics, cpds_node_disk_read_bytes_total);
 	cpds_node_disk_written_bytes_total = prom_counter_new("cpds_node_disk_written_bytes_total", "The total bytes written successfully.", label_count, disk_labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_node_disk_written_bytes_total);
+
+	cpds_node_lvm_state = prom_gauge_new("cpds_node_lvm_state", "LVM state (1:active, 0:inactive)", label_count, disk_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_lvm_state);
 }
 
 static void group_node_disk_destroy()
@@ -188,8 +192,62 @@ int update_node_disk_metrics()
 	return 0;
 }
 
+static void strip_quot(char str[], int len)
+{
+	int i, j;
+	for (i = 0; i < len; i++) {
+		if (str[i] == '\'') {
+			for (j = i; j < len; j++) {
+				str[j] = str[j + 1];
+			}
+			len--;
+		}
+	}
+}
+
+static void update_node_lvm_state_metrics()
+{
+	gchar *cmd_out = NULL;
+	gchar *cmd_err = NULL;
+	GError *gerr = NULL;
+	char **line_arr;
+
+	prom_gauge_clear(cpds_node_lvm_state);
+
+	if (g_spawn_command_line_sync("lvscan", &cmd_out, &cmd_err, NULL, &gerr) == FALSE) {
+		CPDS_LOG_WARN("Failed to exe lvscan. - %s", gerr->message);
+		goto out;
+	}
+
+	line_arr = g_strsplit(cmd_out, "\n", -1);
+	if (line_arr == NULL)
+		goto out;
+
+	int i = 0;
+	while (line_arr[i] != NULL) {
+		char state[20];
+		char device[200];
+		sscanf(line_arr[i], "%s %s", state, device);
+		strip_quot(device, strlen(device));
+		if (g_strcmp0(state, "ACTIVE") == 0)
+			prom_gauge_set(cpds_node_lvm_state, 1, (const char *[]){device});
+		else
+			prom_gauge_set(cpds_node_lvm_state, 0, (const char *[]){device});
+		i++;
+	}
+
+out:
+	if (line_arr)
+		g_strfreev(line_arr);
+	if (cmd_out)
+		g_free(cmd_out);
+	if (gerr)
+		g_error_free(gerr);
+}
+
 static void group_node_disk_update()
 {
 	update_node_blk_metrics();
 	update_node_disk_metrics();
+	update_node_lvm_state_metrics();
 }
