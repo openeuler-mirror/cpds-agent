@@ -73,7 +73,8 @@ out:
 	if (ret != 0)
 		prom_counter_clear(cpds_node_cpu_seconds_total);
 
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	return ret;
 }
 

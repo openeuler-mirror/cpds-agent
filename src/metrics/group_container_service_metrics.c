@@ -106,9 +106,8 @@ static int update_service_status_metrics(const char *service)
 out:
 	if (state != NULL && g_strcmp0(state, "active") == 0) {
 		ret = 1;
-		prom_gauge_set(cpds_container_service_etcd_status, 1, NULL);
 	} else {
-		prom_gauge_clear(cpds_container_service_etcd_status);
+		ret = 0;
 	}
 
 	sd_bus_error_free(&error);
