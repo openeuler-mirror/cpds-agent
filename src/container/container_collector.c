@@ -438,7 +438,18 @@ static void do_update_info()
 	if (pthread_rwlock_wrlock(&rwlock) != 0)
 		goto out;
 
-	// TODO: docker.service 服务不在就直接返回错误
+	// docker.service 服务不在线则不更新容器信息
+	gchar *docker_active = NULL;
+	if (g_spawn_command_line_sync("systemctl is-active docker.service", &docker_active, NULL, NULL, NULL) == FALSE) {
+		goto out;
+	}
+	if (docker_active == NULL)
+		goto out;
+	if (g_strcmp0(docker_active, "active") != 0) {
+		g_free(docker_active);
+		goto out;
+	}
+	g_free(docker_active);
 
 	// 获取当前容器id列表
 	gchar *id_list_str = NULL;

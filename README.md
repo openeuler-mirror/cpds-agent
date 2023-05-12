@@ -19,6 +19,7 @@ cpds-agent是为CPDS(Container Problem Detect System)容器故障检测系统开
 * libsystemd
 * clang: 版本不低于10.0
 * bpftool
+* elfutils
 * 内核版本 5.10 及以上
    * 需要开启内核选项 CONFIG_DEBUG_INFO_BTF=y
 
