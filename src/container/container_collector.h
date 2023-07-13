@@ -34,6 +34,7 @@ typedef struct _ctn_resource_metrics {
 	char *cid; // 容器id
 	int pid;
 	double disk_usage_bytes;
+	double disk_iodelay;
 	double cpu_usage_seconds;
 	double memory_total_bytes;
 	double memory_usage_bytes;
