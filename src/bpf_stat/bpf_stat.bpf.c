@@ -50,6 +50,19 @@ struct {
 	__type(value, perf_stat_t);
 } perf_stat_map SEC(".maps");
 
+typedef struct _sys_enter_clone_stat {
+	int container_pid; // 容器pid
+	int is_thread;     // 0: 创建进程； 1: 创建线程
+} sys_enter_clone_t;
+
+// 记录容器创建进程/线程信息，仅bpf内核程序内部计算使用
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, MAX_STAT_MAP_SIZE);
+	__type(key, int); //tid
+	__type(value, sys_enter_clone_t);
+} sys_enter_clone_map SEC(".maps");
+
 struct sys_enter_mmap_para {
 	__u64 pad;
 	int __syscall_nr;
@@ -116,6 +129,44 @@ int handle_exit_mmap(struct exit_mmap_t *ctx)
 	return 0;
 }
 
+struct enter_clone_t {
+	__u64 pad;
+	int __syscall_nr;
+	unsigned long clone_flags;
+	unsigned long newsp;
+	unsigned long parent_tidptr;
+	unsigned long tls;
+	unsigned long child_tidptr;
+};
+
+#ifndef CLONE_THREAD
+#define CLONE_THREAD 0x00010000
+#endif
+
+SEC("tracepoint/syscalls/sys_enter_clone")
+int handle_enter_clone(struct enter_clone_t *ctx)
+{
+	__u64 id = bpf_get_current_pid_tgid();
+	int pid = id >> 32;
+	int tid = (int)id;
+
+	int *cpid = bpf_map_lookup_elem(&pid_monitor_map, &pid);
+	if (cpid) {
+		sys_enter_clone_t st = {0};
+		st.container_pid = *cpid;
+		if (ctx->clone_flags & CLONE_THREAD) {
+			// bpf_printk("tttttt [%d][%d] clone thread", pid, tid);
+			st.is_thread = 1;
+		} else {
+			// bpf_printk("pppppp [%d][%d] clone process", pid, tid);
+			st.is_thread = 0;
+		}
+		bpf_map_update_elem(&sys_enter_clone_map, &tid, &st, BPF_ANY);
+	}
+
+	return 0;
+}
+
 struct exit_clone_t {
 	__u64 pad;
 	int __syscall_nr;
@@ -129,27 +180,63 @@ int handle_exit_clone(struct exit_clone_t *ctx)
 	int pid = id >> 32;
 	int tid = (int)id;
 
-	if (ctx->ret == 0) {
-		struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-		int ppid = BPF_CORE_READ(task, real_parent, tgid);
-		int *cpid = bpf_map_lookup_elem(&pid_monitor_map, &ppid);
-		if (cpid) {
-			// 子进程添加监控
-			bpf_map_update_elem(&pid_monitor_map, &pid, cpid, BPF_ANY);
-			// bpf_printk(">>> [%d][%d] child sys_exit_clone: ", pid, tid);
-			// bpf_printk("    ppid=%d, cpid=%d\n", ppid, *cpid);
-		}
-	} else if (ctx->ret < 0) {
-		int *cpid = bpf_map_lookup_elem(&pid_monitor_map, &pid);
-		if (cpid) {
-			perf_stat_t *s = bpf_map_lookup_elem(&perf_stat_map, cpid);
-			if (s) {
-				// 如果失败，记录创建进程失败
-				s->total_fork_fail_cnt += 1;
-				// bpf_printk(">>> [%d][%d] clone fail: ret=%ld", pid, tid, ctx->ret);
+	sys_enter_clone_t *st = bpf_map_lookup_elem(&sys_enter_clone_map, &tid);
+	if (!st)
+		return 0;
+
+	// 记录 进程/线程 创建失败
+	if (ctx->ret < 0) {
+		perf_stat_t *s = bpf_map_lookup_elem(&perf_stat_map, &st->container_pid);
+		if (s) {
+			if (st->is_thread == 0) {
+				s->total_create_process_fail_cnt += 1;
+				// bpf_printk(">>> [%d][%d] create process fail: ret=%ld", pid, tid, ctx->ret);
+			} else {
+				s->total_create_thread_fail_cnt += 1;
+				// bpf_printk(">>> [%d][%d] create thread fail: ret=%ld", pid, tid, ctx->ret);
 			}
 		}
 	}
 
+	bpf_map_delete_elem(&sys_enter_clone_map, &tid);
+
+	return 0;
+}
+
+SEC("tp/sched/sched_process_exec")
+int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
+{
+	__u64 id = bpf_get_current_pid_tgid();
+	int pid = id >> 32;
+	int tid = (int)id;
+
+	struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+	if (!task)
+		return 0;
+	int ppid = BPF_CORE_READ(task, real_parent, tgid);
+	int *cpid = bpf_map_lookup_elem(&pid_monitor_map, &ppid);
+	if (cpid) {
+		// 容器子进程添加监控
+		bpf_map_update_elem(&pid_monitor_map, &pid, cpid, BPF_ANY);
+		// bpf_printk(">>> [%d][%d] container sched_process_exec: ", pid, tid);
+		// bpf_printk("    ppid=%d, cpid=%d\n", ppid, *cpid);
+	}
+
+	return 0;
+}
+
+SEC("tp/sched/sched_process_exit")
+int handle_exit(struct trace_event_raw_sched_process_template* ctx)
+{
+	__u64 id = bpf_get_current_pid_tgid();
+	int pid = id >> 32;
+	int tid = (int)id;
+
+	int *cpid = bpf_map_lookup_elem(&pid_monitor_map, &pid);
+	if (cpid) {
+		// 容器子进程移除监控
+		bpf_map_delete_elem(&pid_monitor_map, &pid);
+	}
+		
 	return 0;
 }

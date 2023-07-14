@@ -594,7 +594,7 @@ static void update_thread(void *arg)
 	pthread_testcancel();
 
 	while (done == 0) {
-		g_usleep(3000000);
+		g_usleep(1000000);
 		do_update_info();
 	};
 }
@@ -743,7 +743,8 @@ GList *get_container_perf_info_list()
 			goto out;
 		}
 		cpm->cid = g_strdup(cinfo->cid);
-		cpm->total_fork_fail_cnt = ps->total_fork_fail_cnt;
+		cpm->total_create_process_fail_cnt = ps->total_create_process_fail_cnt;
+		cpm->total_create_thread_fail_cnt = ps->total_create_thread_fail_cnt;
 		cpm->total_mmap_count = ps->total_mmap_count;
 		cpm->total_mmap_fail_count = ps->total_mmap_fail_count;
 		cpm->total_mmap_size = ps->total_mmap_size;

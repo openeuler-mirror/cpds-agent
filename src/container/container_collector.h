@@ -15,7 +15,8 @@ typedef struct _ctn_perf_stat_metric {
 	double total_mmap_fail_count;
 	double total_mmap_size;
 	double total_mmap_time_seconds;
-	double total_fork_fail_cnt;
+	double total_create_process_fail_cnt;
+	double total_create_thread_fail_cnt;
 } ctn_perf_metric;
 
 typedef struct _ctn_net_dev_stat_metric {
