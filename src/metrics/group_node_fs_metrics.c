@@ -13,7 +13,7 @@ static void group_node_fs_destroy();
 static void group_node_fs_update();
 
 metric_group group_node_fs = {.name = "node_fs_group",
-                              .update_period = 10,
+                              .update_period = 3,
                               .init = group_node_fs_init,
                               .destroy = group_node_fs_destroy,
                               .update = group_node_fs_update};
