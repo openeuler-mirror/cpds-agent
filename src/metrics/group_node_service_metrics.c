@@ -12,7 +12,7 @@ static void group_node_service_destroy();
 static void group_node_service_update();
 
 metric_group group_node_service = {.name = "node_service_group",
-                                   .update_period = 10,
+                                   .update_period = 5,
                                    .init = group_node_service_init,
                                    .destroy = group_node_service_destroy,
                                    .update = group_node_service_update};
@@ -90,7 +90,7 @@ out:
 	if (state != NULL && g_strcmp0(state, "active") == 0) {
 		prom_gauge_set(cpds_systemd_journald_status, 1, NULL);
 	} else {
-		prom_gauge_clear(cpds_systemd_journald_status);
+		prom_gauge_set(cpds_systemd_journald_status, 0, NULL);
 	}
 
 	sd_bus_error_free(&error);
