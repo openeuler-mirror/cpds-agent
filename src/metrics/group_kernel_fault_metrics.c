@@ -1,3 +1,7 @@
+#define _XOPEN_SOURCE
+#define __USE_XOPEN
+#include <time.h>
+
 #include "metric_group_type.h"
 #include "prom.h"
 #include "logger.h"
@@ -135,6 +139,18 @@ out:
 	return reason;
 }
 
+// 转换成unix时间戳
+static long convert_time_stamp(const char *crash_time)
+{
+	struct tm tm;
+	memset(&tm, 0, sizeof(struct tm));
+
+	strptime(crash_time, "%Y-%m-%d-%H:%M:%S", &tm);
+	tm.tm_isdst = -1;
+
+	return mktime(&tm);
+}
+
 static void update_kernel_crash_metrics()
 {
 	GDir *carsh_dir = NULL;
@@ -155,9 +171,11 @@ static void update_kernel_crash_metrics()
 			if (*c_time++ == '-')
 				break;
 		}
+		// 转换成时间戳
+		long time_stamp = convert_time_stamp(c_time);
 		// 提取原因
 		char *c_reason = get_crash_reason(sub_name);
-		prom_gauge_set(cpds_kernel_crash, 1, (const char *[]){c_time, c_reason});
+		prom_gauge_set(cpds_kernel_crash, time_stamp, (const char *[]){c_time, c_reason});
 		CPDS_LOG_INFO("kernel crash time: '%s', reason: '%s'", c_time, c_reason);
 		if (c_reason)
 			g_free(c_reason);
