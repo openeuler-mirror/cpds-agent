@@ -10,7 +10,8 @@ typedef struct _perf_stat {
 	unsigned long total_mmap_fail_count;
 	unsigned long long total_mmap_size;
 	unsigned long long total_mmap_time_ns;
-	unsigned long total_fork_fail_cnt;
+	unsigned long total_create_process_fail_cnt;
+	unsigned long total_create_thread_fail_cnt;
 } perf_stat_t;
 
 #endif
