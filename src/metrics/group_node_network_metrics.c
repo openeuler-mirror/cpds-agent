@@ -80,85 +80,55 @@ static void group_node_network_destroy()
 		g_list_free(group_node_network.metrics);
 }
 
-static int update_net_info_metrics(void)
+static void update_interface_info_metircs(const char *ifname)
 {
 	int fd;
-	int if_num = 0;
-	struct ifreq ifr[200] = {0};
-	struct ifconf ifc;
+	struct ifreq ifr;
 	char mac[20] = {0};
 	char ip[20] = {0};
 	char mask[20] = {0};
 
-	// 每次更新清理一下，避免残留已删除的指标项
-	prom_gauge_clear(cpds_node_network_info);
-	prom_gauge_clear(cpds_node_network_up);
+	if (!ifname)
+		return;
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("socket");
 		close(fd);
-		return -1;
+		return;
 	}
 
-	ifc.ifc_len = sizeof(ifr);
-	ifc.ifc_buf = (caddr_t)ifr;
-	if (!ioctl(fd, SIOCGIFCONF, (char *)&ifc)) {
-		if_num = ifc.ifc_len / sizeof(struct ifreq);
-		while (if_num-- > 0) {
-			if (ioctl(fd, SIOCGIFFLAGS, &ifr[if_num]) < 0) {
-				CPDS_LOG_ERROR("ioctl: %s [%s:%d]", strerror(errno), __FILE__, __LINE__);
-				continue;
-			}
+	strcpy(ifr.ifr_name, ifname);
 
-			// get "up"/"down" state of this interface
-			if (ifr[if_num].ifr_flags & IFF_UP)
-				prom_gauge_set(cpds_node_network_up, 1, (const char *[]){ifr[if_num].ifr_name});
-			else 
-				prom_gauge_set(cpds_node_network_up, 0, (const char *[]){ifr[if_num].ifr_name});
-
-			// get the mac of this interface
-			if (!ioctl(fd, SIOCGIFHWADDR, (char *)(&ifr[if_num]))) {
-				memset(mac, 0, sizeof(mac));
-				snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x",
-				         (unsigned char)ifr[if_num].ifr_hwaddr.sa_data[0],
-				         (unsigned char)ifr[if_num].ifr_hwaddr.sa_data[1],
-				         (unsigned char)ifr[if_num].ifr_hwaddr.sa_data[2],
-				         (unsigned char)ifr[if_num].ifr_hwaddr.sa_data[3],
-				         (unsigned char)ifr[if_num].ifr_hwaddr.sa_data[4],
-				         (unsigned char)ifr[if_num].ifr_hwaddr.sa_data[5]);
-			} else {
-				CPDS_LOG_ERROR("ioctl: %s [%s:%d]", strerror(errno), __FILE__, __LINE__);
-				continue;
-			}
-
-			// get the IP of this interface
-			if (!ioctl(fd, SIOCGIFADDR, (char *)&ifr[if_num])) {
-				snprintf(ip, sizeof(ip), "%s",
-				         (char *)inet_ntoa(((struct sockaddr_in *)&(ifr[if_num].ifr_addr))->sin_addr));
-			} else {
-				CPDS_LOG_ERROR("ioctl: %s [%s:%d]", strerror(errno), __FILE__, __LINE__);
-				continue;
-			}
-
-			// get the subnet mask of this interface
-			if (!ioctl(fd, SIOCGIFNETMASK, &ifr[if_num])) {
-				snprintf(mask, sizeof(mask), "%s",
-				         (char *)inet_ntoa(((struct sockaddr_in *)&(ifr[if_num].ifr_netmask))->sin_addr));
-			} else {
-				CPDS_LOG_ERROR("ioctl: %s [%s:%d]", strerror(errno), __FILE__, __LINE__);
-				continue;
-			}
-
-			prom_gauge_set(cpds_node_network_info, 1, (const char *[]){ifr[if_num].ifr_name, mac, ip, mask});
-		}
-	} else {
-		CPDS_LOG_ERROR("ioctl: %s [%s:%d]", strerror(errno), __FILE__, __LINE__);
-		close(fd);
-		return -1;
+	if (ioctl(fd, SIOCGIFFLAGS, &ifr) == 0) {
+		// get "up"/"down" state of this interface
+		if (ifr.ifr_flags & IFF_UP)
+			prom_gauge_set(cpds_node_network_up, 1, (const char *[]){ifr.ifr_name});
+		else
+			prom_gauge_set(cpds_node_network_up, 0, (const char *[]){ifr.ifr_name});
 	}
+
+	// get the mac of this interface
+	if (ioctl(fd, SIOCGIFHWADDR, (char *)(&ifr)) == 0) {
+		memset(mac, 0, sizeof(mac));
+		snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", (unsigned char)ifr.ifr_hwaddr.sa_data[0],
+		         (unsigned char)ifr.ifr_hwaddr.sa_data[1], (unsigned char)ifr.ifr_hwaddr.sa_data[2],
+		         (unsigned char)ifr.ifr_hwaddr.sa_data[3], (unsigned char)ifr.ifr_hwaddr.sa_data[4],
+		         (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
+	}
+
+	// get the IP of this interface
+	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) == 0) {
+		snprintf(ip, sizeof(ip), "%s", (char *)inet_ntoa(((struct sockaddr_in *)&(ifr.ifr_addr))->sin_addr));
+	}
+
+	// get the subnet mask of this interface
+	if (ioctl(fd, SIOCGIFNETMASK, &ifr) == 0) {
+		snprintf(mask, sizeof(mask), "%s", (char *)inet_ntoa(((struct sockaddr_in *)&(ifr.ifr_netmask))->sin_addr));
+	}
+
+	prom_gauge_set(cpds_node_network_info, 1, (const char *[]){ifr.ifr_name, mac, ip, mask});
 
 	close(fd);
-	return 0;
 }
 
 static void update_net_dev_metrics()
@@ -187,6 +157,8 @@ static void update_net_dev_metrics()
 	unsigned long long t_carrier;
 	unsigned long long t_compressed;
 
+	prom_gauge_clear(cpds_node_network_info);
+	prom_gauge_clear(cpds_node_network_up);
 	prom_counter_clear(cpds_node_network_receive_bytes_total);
 	prom_counter_clear(cpds_node_network_receive_drop_total);
 	prom_counter_clear(cpds_node_network_receive_errors_total);
@@ -210,6 +182,7 @@ static void update_net_dev_metrics()
 		       &t_packets, &t_errs, &t_drop, &t_fifo, &t_colls, &t_carrier, &t_compressed);
 		char *p = strtok(ifname, ":");
 		if (p) {
+			update_interface_info_metircs(ifname);
 			prom_counter_set(cpds_node_network_receive_bytes_total, r_bytes, (const char *[]){ifname});
 			prom_counter_set(cpds_node_network_receive_drop_total, r_drop, (const char *[]){ifname});
 			prom_counter_set(cpds_node_network_receive_errors_total, r_errs, (const char *[]){ifname});
@@ -273,7 +246,6 @@ out:
 
 static void group_node_network_update()
 {
-	update_net_info_metrics();
 	update_net_dev_metrics();
 	update_netstat_tcp_metrics();
 }
