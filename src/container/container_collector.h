@@ -7,6 +7,7 @@ typedef struct _ctn_basic_metric {
 	char *cid; // 容器id
 	int pid;
 	char *status;
+	int exit_code;
 } ctn_basic_metric;
 
 typedef struct _ctn_perf_stat_metric {
