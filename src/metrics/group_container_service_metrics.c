@@ -12,7 +12,7 @@ static void group_container_service_destroy();
 static void group_container_service_update();
 
 metric_group group_container_service = {.name = "container_service_group",
-                                        .update_period = 9,
+                                        .update_period = 5,
                                         .init = group_container_service_init,
                                         .destroy = group_container_service_destroy,
                                         .update = group_container_service_update};
@@ -25,6 +25,7 @@ static prom_gauge_t *cpds_container_service_kube_apiserver_status;
 static prom_gauge_t *cpds_container_service_kube_controller_manager_status;
 static prom_gauge_t *cpds_container_service_kube_scheduler_status;
 static prom_gauge_t *cpds_container_service_kube_proxy_status;
+static prom_gauge_t *cpds_container_service_kubelet_status;
 
 static void group_container_service_init()
 {
@@ -45,6 +46,8 @@ static void group_container_service_init()
 	grp->metrics = g_list_append(grp->metrics, cpds_container_service_kube_scheduler_status);
 	cpds_container_service_kube_proxy_status = prom_gauge_new("cpds_container_service_kube_proxy_status", "kube-proxy service status", 0, NULL);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_service_kube_proxy_status);
+	cpds_container_service_kubelet_status = prom_gauge_new("cpds_container_service_kubelet_status", "kubelet service status", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_service_kubelet_status);
 }
 
 static void group_container_service_destroy()
@@ -123,7 +126,7 @@ out:
 	if (update_service_status_metrics(_service) == 1)                                   \
 		prom_gauge_set(cpds_container_service_##_name##_status, 1, NULL);               \
 	else                                                                                \
-		prom_gauge_clear(cpds_container_service_##_name##_status);
+		prom_gauge_set(cpds_container_service_##_name##_status, 0, NULL);
 
 static void group_container_service_update()
 {
@@ -135,4 +138,5 @@ static void group_container_service_update()
 	UPDATE_SERVICE_METRICS(kube_controller_manager, "kube-controller-manager.service");
 	UPDATE_SERVICE_METRICS(kube_scheduler, "kube-scheduler.service");
 	UPDATE_SERVICE_METRICS(kube_proxy, "kube-proxy.service");
+	UPDATE_SERVICE_METRICS(kubelet, "kubelet.service");
 }
