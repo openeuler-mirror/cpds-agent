@@ -27,6 +27,7 @@ static prom_gauge_t *cpds_container_cpu_usage_seconds_total;
 
 // disk related metrics
 static prom_gauge_t *cpds_container_disk_usage_bytes;
+static prom_gauge_t *cpds_container_disk_iodelay_total;
 
 static prom_counter_t *cpds_container_network_receive_bytes_total;
 static prom_counter_t *cpds_container_network_receive_drop_total;
@@ -59,6 +60,8 @@ static void group_container_resource_init()
 	
 	cpds_container_disk_usage_bytes = prom_gauge_new("cpds_container_disk_usage_bytes", "container disk usage in bytes", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_disk_usage_bytes);
+	cpds_container_disk_iodelay_total = prom_gauge_new("cpds_container_disk_iodelay_total", "container disk iodelay in ticks", label_count, labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_disk_iodelay_total);
 	
 	
 	const char *net_labels[] = {"container", "interface"};
@@ -96,6 +99,7 @@ static void group_container_resource_update()
 	prom_gauge_clear(cpds_container_memory_cache_bytes);
 	prom_gauge_clear(cpds_container_cpu_usage_seconds_total);
 	prom_gauge_clear(cpds_container_disk_usage_bytes);
+	prom_gauge_clear(cpds_container_disk_iodelay_total);
 	prom_counter_clear(cpds_container_network_receive_bytes_total);
 	prom_counter_clear(cpds_container_network_receive_drop_total);
 	prom_counter_clear(cpds_container_network_receive_errors_total);
@@ -116,6 +120,7 @@ static void group_container_resource_update()
 		prom_gauge_set(cpds_container_memory_cache_bytes, crm->memory_cached_bytes, (const char *[]){crm->cid});
 		prom_gauge_set(cpds_container_cpu_usage_seconds_total, crm->cpu_usage_seconds, (const char *[]){crm->cid});
 		prom_gauge_set(cpds_container_disk_usage_bytes, crm->disk_usage_bytes, (const char *[]){crm->cid});
+		prom_gauge_set(cpds_container_disk_iodelay_total, crm->disk_iodelay, (const char *[]){crm->cid});
 
 		GList *sub_iter = crm->ctn_net_dev_stat_list;
 		while (sub_iter != NULL) {

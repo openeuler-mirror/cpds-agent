@@ -42,12 +42,19 @@ typedef struct _net_dev_stat_t {
 	unsigned long long t_compressed;
 } net_dev_stat_t;
 
+typedef struct _delay_info {
+	int tid;
+	unsigned long long delayacct_blkio_ticks;
+} delay_info_t;
+
 typedef struct _container_info {
 	char *cid;                   // container id
 	int pid;                     // container main pid
 	char *status;                // container status
 	unsigned long disk_usage;    // unit: bytes
 	unsigned long cpu_usage_ns;  // uint; ns
+	unsigned long long disk_iodelay; // unit: ticks
+	GHashTable *iodelay_map;         // map (tid, delay_info_t)
 	memory_stat_t memory_stat;   // memory related stats
 	perf_stat_t perf_stat;       // performance stats
 	GList *net_dev_stat_list;    // list of net_dev_stat_t
@@ -317,6 +324,78 @@ static GList *fill_process_stat_list(int pid, GList *plist)
 	return plist;
 }
 
+static void iodelay_value_destroy(gpointer data)
+{
+	delay_info_t *info = (delay_info_t *)data;
+	if (info) {
+		g_free(info);
+	}
+}
+
+static void get_disk_iodelay(char *cid, container_info_t *info)
+{
+	char full_path[260] = {0};
+	FILE *fp = NULL;
+	FILE *stat_fp = NULL;
+	int tid = 0;
+	unsigned long long delayacct_blkio_ticks = 0;
+	unsigned long long previous_delayacct_blkio_ticks = 0;
+	unsigned long long thread_iodelay = 0;
+	unsigned long long max_iodelay = 0;
+
+	g_snprintf(full_path, sizeof(full_path), "/sys/fs/cgroup/blkio/docker/%s/tasks", cid);
+	fp = fopen(full_path, "r");
+	if (fp == NULL)
+		goto out;
+
+	GHashTable *iodelay_map = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, iodelay_value_destroy);
+
+	while (fscanf(fp, "%d", &tid) == 1) {
+		g_snprintf(full_path, sizeof(full_path), "/proc/%d/task/%d/stat", tid, tid);
+		stat_fp = fopen(full_path, "r");
+		if (stat_fp == NULL)
+			continue;
+		// 第42个字段是delayacct_blkio_ticks
+		int r = fscanf(stat_fp,
+		               "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s "
+		               "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s "
+		               "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s "
+		               "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s "
+		               "%*s %llu",
+		               &delayacct_blkio_ticks);
+		if (r == 1) {
+			delay_info_t *delay_info = g_malloc0(sizeof(delay_info_t));
+			delay_info->tid = tid;
+			delay_info->delayacct_blkio_ticks = delayacct_blkio_ticks;
+			g_hash_table_insert(iodelay_map, &tid, delay_info);
+
+			if (info->iodelay_map != NULL) {
+				delay_info_t *previous_delay_info = g_hash_table_lookup(info->iodelay_map, &tid);
+				if (previous_delay_info != NULL) {
+					previous_delayacct_blkio_ticks = previous_delay_info->delayacct_blkio_ticks;
+				} else {
+					previous_delayacct_blkio_ticks = 0;
+				}
+			} else {
+				previous_delayacct_blkio_ticks = 0;
+			}
+
+			thread_iodelay = delayacct_blkio_ticks - previous_delayacct_blkio_ticks;
+			max_iodelay = thread_iodelay > max_iodelay ? thread_iodelay : max_iodelay;
+		}
+		fclose(stat_fp);
+	}
+
+	if (info->iodelay_map)
+		g_hash_table_destroy(info->iodelay_map);
+	info->iodelay_map = iodelay_map;
+	info->disk_iodelay += max_iodelay;
+
+out:
+	if (fp)
+		fclose(fp);
+}
+
 #define RESET_STRING(_old, _new)                            \
 	if (_old == NULL)                                       \
 		_old = g_strdup(_new);                              \
@@ -361,6 +440,7 @@ static void fill_container_info(char *cid, container_info_t *info)
 		get_perf_stat(info->pid, &info->perf_stat);
 		info->net_dev_stat_list = fill_net_dev_stat_list(info->pid, info->net_dev_stat_list);
 		info->process_stat_list = fill_process_stat_list(info->pid, info->process_stat_list);
+		get_disk_iodelay(info->cid, info);
 	}
 
 out:
@@ -552,6 +632,10 @@ static void cmap_value_destroy(gpointer data)
 			g_list_free(info->process_stat_list);
 			info->process_stat_list = NULL;
 		}
+		if (info->iodelay_map) {
+			g_hash_table_destroy(info->iodelay_map);
+			info->iodelay_map = NULL;
+		}
 		g_free(info);
 	}
 }
@@ -696,6 +780,7 @@ GList *get_container_resource_info_list()
 		crm->pid = cinfo->pid;
 		crm->cpu_usage_seconds = (double)cinfo->cpu_usage_ns / 1000000000;
 		crm->disk_usage_bytes = cinfo->disk_usage;
+		crm->disk_iodelay = cinfo->disk_iodelay;
 		crm->memory_total_bytes = cinfo->memory_stat.total;
 		crm->memory_usage_bytes = cinfo->memory_stat.usage;
 		crm->memory_swap_total_bytes = cinfo->memory_stat.swap_total;
