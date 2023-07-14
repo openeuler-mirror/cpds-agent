@@ -12,7 +12,7 @@ static void group_node_memory_destroy();
 static void group_node_memory_update();
 
 metric_group group_node_memory = {.name = "node_memory_group",
-                                  .update_period = 10,
+                                  .update_period = 2,
                                   .init = group_node_memory_init,
                                   .destroy = group_node_memory_destroy,
                                   .update = group_node_memory_update};

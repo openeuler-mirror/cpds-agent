@@ -8,7 +8,7 @@ static void group_node_disk_destroy();
 static void group_node_disk_update();
 
 metric_group group_node_disk = {.name = "node_disk_group",
-                              .update_period = 10,
+                              .update_period = 3,
                               .init = group_node_disk_init,
                               .destroy = group_node_disk_destroy,
                               .update = group_node_disk_update};
@@ -210,7 +210,7 @@ static void update_node_lvm_state_metrics()
 	gchar *cmd_out = NULL;
 	gchar *cmd_err = NULL;
 	GError *gerr = NULL;
-	char **line_arr;
+	char **line_arr = NULL;
 
 	prom_gauge_clear(cpds_node_lvm_state);
 

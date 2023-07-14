@@ -48,12 +48,15 @@ static void do_update_metrics(void *arg)
 		g_usleep(1000000);
 
 		static int i = 0;
+		int offset = 0;
 		GList *giter = NULL;
 		for (giter = g_list_first(mgroups); giter != NULL; giter = g_list_next(giter)) {
 			metric_group *group = (metric_group *)giter->data;
-			if (group->update && (group->update_period > 0) && (i % group->update_period == 0)) {
+			if (group->update && (group->update_period > 0) && ((i + offset) % group->update_period == 0)) {
 				(*group->update)();
 			}
+			if (i > 0) // 初始第一次全部都更新
+				offset++;
 		}
 		i++;
 	};

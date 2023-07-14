@@ -17,7 +17,7 @@ static void group_node_network_destroy();
 static void group_node_network_update();
 
 metric_group group_node_network = {.name = "node_network_group",
-                                   .update_period = 4,
+                                   .update_period = 3,
                                    .init = group_node_network_init,
                                    .destroy = group_node_network_destroy,
                                    .update = group_node_network_update};

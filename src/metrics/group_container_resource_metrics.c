@@ -10,7 +10,7 @@ static void group_container_resource_destroy();
 static void group_container_resource_update();
 
 metric_group group_container_resource = {.name = "container_resource_group",
-                                         .update_period = 3,
+                                         .update_period = 1,
                                          .init = group_container_resource_init,
                                          .destroy = group_container_resource_destroy,
                                          .update = group_container_resource_update};
