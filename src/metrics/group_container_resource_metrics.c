@@ -92,6 +92,8 @@ static void group_container_resource_destroy()
 
 static void group_container_resource_update()
 {
+	GList *plist = get_container_resource_info_list();
+
 	prom_gauge_clear(cpds_container_memory_total_bytes);
 	prom_gauge_clear(cpds_container_memory_usage_bytes);
 	prom_gauge_clear(cpds_container_memory_swap_total_bytes);
@@ -109,7 +111,6 @@ static void group_container_resource_update()
 	prom_counter_clear(cpds_container_network_transmit_errors_total);
 	prom_counter_clear(cpds_container_network_transmit_packets_total);
 
-	GList *plist = get_container_resource_info_list();
 	GList *iter = plist;
 	while (iter != NULL) {
 		ctn_resource_metric *crm = iter->data;

@@ -76,7 +76,7 @@ static unsigned long str_to_bytes(const char *str)
 	gchar *suffix = NULL; // 后缀字符串
 	gdouble value = g_ascii_strtod(str, &suffix);
 	if (suffix) {
-		if (g_ascii_strncasecmp(suffix, "B", 1) == 0 || g_ascii_strncasecmp(suffix, "B", 1) == 0) {
+		if (g_ascii_strncasecmp(suffix, "B", 1) == 0) {
 			bytes = (guint64)(value);
 		} else if (g_ascii_strncasecmp(suffix, "kB", 2) == 0 || g_ascii_strncasecmp(suffix, "KB", 2) == 0) {
 			bytes = (guint64)(value * 1024);
@@ -89,38 +89,57 @@ static unsigned long str_to_bytes(const char *str)
 	return (unsigned long)bytes;
 }
 
-static void get_disk_usage(char *cid, unsigned long *usage)
+typedef struct _container_cgroup_dirs {
+	char cgroup_cpu_dir[300];
+	char cgroup_memory_dir[300];
+	char cgroup_blkio_dir[300];
+} container_cgroup_dirs;
+
+static int get_container_cgroup_dirs(int pid, container_cgroup_dirs *ccgd)
 {
-	if (cid == NULL || usage == NULL)
-		return;
-	
-	gchar *cmd = NULL;
-	gchar *cmd_ret_str = NULL;
-	
-	// 使用 docker ps 获取信息，结果形如：xxxB (virtual xxxB)
-	cmd = g_strdup_printf("docker ps --no-trunc --filter ID=%s --format \"{{.Size}}\"", cid);
-	if (g_spawn_command_line_sync(cmd, &cmd_ret_str, NULL, NULL, NULL) == FALSE) {
-		CPDS_LOG_ERROR("Failed to exe docker ps");
+	int ret = -1;
+
+	FILE *fp = NULL;
+	char pcg_file[50] = {0};
+	char line[300] = {0};
+
+	g_snprintf(pcg_file, sizeof(pcg_file), "/proc/%d/cgroup", pid);
+	fp = fopen(pcg_file, "r");
+	if (!fp) {
+		CPDS_LOG_ERROR("Failed to read file: %s - '%s'", pcg_file, strerror(errno));
 		goto out;
 	}
-	g_strstrip(cmd_ret_str);
-	*usage = str_to_bytes(cmd_ret_str);
 
+	while (fgets(line, sizeof(line), fp)) {
+		g_strstrip(line);
+		char **arr = g_strsplit(line, ":", -1);
+		int num = g_strv_length(arr);
+		if (num < 3)
+			continue;
+		if (g_strcmp0("cpu,cpuacct", arr[1]) == 0) 
+			g_snprintf(ccgd->cgroup_cpu_dir, sizeof(ccgd->cgroup_cpu_dir), "/sys/fs/cgroup/cpu,cpuacct%s", arr[2]);
+		else if (g_strcmp0("memory", arr[1]) == 0)
+			g_snprintf(ccgd->cgroup_memory_dir, sizeof(ccgd->cgroup_memory_dir), "/sys/fs/cgroup/memory%s", arr[2]);
+		else if (g_strcmp0("blkio", arr[1]) == 0)
+			g_snprintf(ccgd->cgroup_blkio_dir, sizeof(ccgd->cgroup_blkio_dir), "/sys/fs/cgroup/blkio%s", arr[2]);
+		g_strfreev(arr);
+	}
+
+	ret = 0;
 out:
-	if (cmd)
-		g_free(cmd);
-	if (cmd_ret_str)
-		g_free(cmd_ret_str);
+	if (fp)
+		fclose(fp);
+	return ret;
 }
 
-static void get_cpu_usage(char *cid, unsigned long *usage)
+static void get_cpu_usage(const char *cgroup_cpu_dir, unsigned long *usage)
 {
-	if (cid == NULL || usage == NULL)
+	if (cgroup_cpu_dir == NULL || usage == NULL)
 		return;
 
 	char cgfile[300] = {0};
 	char *cg_cpu_usage = NULL;
-	g_snprintf(cgfile, sizeof(cgfile), "/sys/fs/cgroup/cpuacct/docker/%s/cpuacct.usage", cid);
+	g_snprintf(cgfile, sizeof(cgfile), "%s/cpuacct.usage", cgroup_cpu_dir);
 	if (g_file_get_contents(cgfile, &cg_cpu_usage, NULL, NULL) == TRUE) {
 		g_strstrip(cg_cpu_usage);
 		*usage = g_ascii_strtoull(cg_cpu_usage, NULL, 10);
@@ -128,9 +147,9 @@ static void get_cpu_usage(char *cid, unsigned long *usage)
 	}
 }
 
-static void get_memory_stat(char *cid, memory_stat_t *ms)
+static void get_memory_stat(const char *cgroup_memory_dir, memory_stat_t *ms)
 {
-	if (cid == NULL || ms == NULL)
+	if (cgroup_memory_dir == NULL || ms == NULL)
 		return;
 
 	struct sysinfo s_info = {0};
@@ -142,7 +161,7 @@ static void get_memory_stat(char *cid, memory_stat_t *ms)
 
 	char *cg_limit_in_bytes = NULL;
 	unsigned long limit_in_bytes = 0;
-	g_snprintf(cgfile, sizeof(cgfile), "/sys/fs/cgroup/memory/docker/%s/memory.limit_in_bytes", cid);
+	g_snprintf(cgfile, sizeof(cgfile), "%s/memory.limit_in_bytes", cgroup_memory_dir);
 	if (g_file_get_contents(cgfile, &cg_limit_in_bytes, NULL, NULL) == TRUE) {
 		g_strstrip(cg_limit_in_bytes);
 		limit_in_bytes = g_ascii_strtoull(cg_limit_in_bytes, NULL, 10);
@@ -157,7 +176,7 @@ static void get_memory_stat(char *cid, memory_stat_t *ms)
 	}
 
 	char *cg_usage_in_bytes = NULL;
-	g_snprintf(cgfile, sizeof(cgfile), "/sys/fs/cgroup/memory/docker/%s/memory.usage_in_bytes", cid);
+	g_snprintf(cgfile, sizeof(cgfile), "%s/memory.usage_in_bytes", cgroup_memory_dir);
 	if (g_file_get_contents(cgfile, &cg_usage_in_bytes, NULL, NULL) == TRUE) {
 		g_strstrip(cg_usage_in_bytes);
 		ms->usage = g_ascii_strtoull(cg_usage_in_bytes, NULL, 10);
@@ -170,7 +189,7 @@ static void get_memory_stat(char *cid, memory_stat_t *ms)
 	} else {
 		char *cg_memsw_limit_in_bytes = NULL;
 		unsigned long memsw_limit_in_bytes = 0;
-		g_snprintf(cgfile, sizeof(cgfile), "/sys/fs/cgroup/memory/docker/%s/memory.memsw.limit_in_bytes", cid);
+		g_snprintf(cgfile, sizeof(cgfile), "%s/memory.memsw.limit_in_bytes", cgroup_memory_dir);
 		if (g_file_get_contents(cgfile, &cg_memsw_limit_in_bytes, NULL, NULL) == TRUE) {
 			g_strstrip(cg_memsw_limit_in_bytes);
 			memsw_limit_in_bytes = g_ascii_strtoull(cg_memsw_limit_in_bytes, NULL, 10);
@@ -180,7 +199,7 @@ static void get_memory_stat(char *cid, memory_stat_t *ms)
 	}
 
 	char *cg_memory_stat = NULL;
-	g_snprintf(cgfile, sizeof(cgfile), "/sys/fs/cgroup/memory/docker/%s/memory.stat", cid);
+	g_snprintf(cgfile, sizeof(cgfile), "%s/memory.stat", cgroup_memory_dir);
 	if (g_file_get_contents(cgfile, &cg_memory_stat, NULL, NULL) == TRUE) {
 		g_strstrip(cg_memory_stat);
 		char **stat_arr = g_strsplit(cg_memory_stat, "\n", -1);
@@ -298,13 +317,15 @@ static GList *traverse_fill_process_stat_list(int pid, GList *plist)
 		while (fscanf(children_fp, "%d", &child_pid) == 1) {
 			plist = traverse_fill_process_stat_list(child_pid, plist);
 		}
+		if (children_fp) {
+			fclose(children_fp);
+			children_fp = NULL;
+		}
 	}
 
 out:
 	if (stat_fp)
 		fclose(stat_fp);
-	if (children_fp)
-		fclose(children_fp);
 	if (task_dir)
 		g_dir_close(task_dir);
 	return plist;
@@ -333,7 +354,7 @@ static void iodelay_value_destroy(gpointer data)
 	}
 }
 
-static void get_disk_iodelay(char *cid, container_info_t *info)
+static void get_disk_iodelay(const char *cgroup_blkio_dir, container_info_t *info)
 {
 	char full_path[260] = {0};
 	FILE *fp = NULL;
@@ -344,7 +365,7 @@ static void get_disk_iodelay(char *cid, container_info_t *info)
 	unsigned long long thread_iodelay = 0;
 	unsigned long long max_iodelay = 0;
 
-	g_snprintf(full_path, sizeof(full_path), "/sys/fs/cgroup/blkio/docker/%s/tasks", cid);
+	g_snprintf(full_path, sizeof(full_path), "%s/tasks", cgroup_blkio_dir);
 	fp = fopen(full_path, "r");
 	if (fp == NULL)
 		goto out;
@@ -436,13 +457,15 @@ static void fill_container_info(char *cid, container_info_t *info)
 	info->exit_code = (int)g_ascii_strtoll(cmd_ret_array[2], NULL, 10);
 	// 以下统计信息在容器运行起来（进程pid有效）时才有意义
 	if (info->pid > 0) {
-		get_disk_usage(info->cid, &info->disk_usage);
-		get_cpu_usage(info->cid, &info->cpu_usage_ns);
-		get_memory_stat(info->cid, &info->memory_stat);
+		container_cgroup_dirs ccgd = {0};
+		if (get_container_cgroup_dirs(info->pid, &ccgd) == 0) {
+			get_cpu_usage(ccgd.cgroup_cpu_dir, &info->cpu_usage_ns);
+			get_memory_stat(ccgd.cgroup_memory_dir, &info->memory_stat);
+			get_disk_iodelay(ccgd.cgroup_blkio_dir, info);
+		}
 		get_perf_stat(info->pid, &info->perf_stat);
 		info->net_dev_stat_list = fill_net_dev_stat_list(info->pid, info->net_dev_stat_list);
 		info->process_stat_list = fill_process_stat_list(info->pid, info->process_stat_list);
-		get_disk_iodelay(info->cid, info);
 	}
 
 out:
@@ -536,7 +559,8 @@ static void do_update_info()
 
 	// 获取当前容器id列表
 	gchar *id_list_str = NULL;
-	if (g_spawn_command_line_sync("docker ps --no-trunc -aq", &id_list_str, NULL, NULL, NULL) == FALSE) {
+	const char *cmd = "docker ps -a --no-trunc --format \"{{.ID}} {{.Size}}\"";
+	if (g_spawn_command_line_sync(cmd, &id_list_str, NULL, NULL, NULL) == FALSE) {
 		CPDS_LOG_ERROR("Failed to exe docker ps to get container cid");
 		goto out;
 	}
@@ -559,9 +583,14 @@ static void do_update_info()
 		char *cid = (char *)key;
 		int i = 0;
 		for (i = 0; i < cnum; i++) {
-			if (g_strcmp0(cid, cid_array[i]) == 0) {
+			if (g_ascii_strncasecmp(cid, cid_array[i], strlen(cid)) == 0) {
 				g_array_index(id_found_flags, int, i) = 1;
 				container_info_t *info = (container_info_t *)value;
+				char *str_disk_usage = g_strrstr(cid_array[i], " ");
+				if (str_disk_usage)
+					info->disk_usage = str_to_bytes(str_disk_usage);
+				else
+					info->disk_usage = 0;
 				fill_container_info(cid, info);
 				break;
 			}
@@ -575,8 +604,16 @@ static void do_update_info()
 	for (int i = 0; i < id_found_flags->len; i++) {
 		if (g_array_index(id_found_flags, int, i) != 1) {
 			container_info_t *info = g_malloc0(sizeof(container_info_t));
-			fill_container_info(cid_array[i], info);
-			g_hash_table_insert(cmap, g_strdup(cid_array[i]), info);
+			char *str_disk_usage = g_strrstr(cid_array[i], " ");
+			if (str_disk_usage)
+				info->disk_usage = str_to_bytes(str_disk_usage);
+			else
+				info->disk_usage = 0;
+			char cid[100];
+			if (sscanf(cid_array[i], "%s ", cid) == 1) {
+				fill_container_info(cid, info);
+				g_hash_table_insert(cmap, g_strdup(cid), info);
+			}
 		}
 	}
 
