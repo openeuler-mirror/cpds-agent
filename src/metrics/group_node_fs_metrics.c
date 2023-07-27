@@ -20,6 +20,7 @@ metric_group group_node_fs = {.name = "node_fs_group",
 
 static prom_gauge_t *cpds_node_fs_total_bytes;
 static prom_gauge_t *cpds_node_fs_usage_bytes;
+static prom_gauge_t *cpds_node_fs_available_bytes;
 
 static void group_node_fs_init()
 {
@@ -31,6 +32,8 @@ static void group_node_fs_init()
 	grp->metrics = g_list_append(grp->metrics, cpds_node_fs_total_bytes);
 	cpds_node_fs_usage_bytes = prom_gauge_new("cpds_node_fs_usage_bytes", "node filesystem used size in bytes", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_node_fs_usage_bytes);
+	cpds_node_fs_available_bytes = prom_gauge_new("cpds_node_fs_available_bytes", "node filesystem used size in bytes", label_count, labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_fs_available_bytes);
 }
 
 static void group_node_fs_destroy()
@@ -48,6 +51,7 @@ int update_node_fs_metrics()
 	// 每次更新清理一下，避免残留已删除的指标项
 	prom_gauge_clear(cpds_node_fs_total_bytes);
 	prom_gauge_clear(cpds_node_fs_usage_bytes);
+	prom_gauge_clear(cpds_node_fs_available_bytes);
 
 	mount_table = setmntent("/etc/mtab", "r");
 	if (!mount_table) {
@@ -75,8 +79,10 @@ int update_node_fs_metrics()
 		if ((s.f_blocks > 0) || !mount_table) {
 			double total = s.f_blocks * s.f_bsize;
 			double usage = (s.f_blocks - s.f_bfree) * s.f_bsize;
+			double available = s.f_bavail * s.f_bsize;
 			prom_gauge_set(cpds_node_fs_total_bytes, total, (const char *[]){device, mount_point});
 			prom_gauge_set(cpds_node_fs_usage_bytes, usage, (const char *[]){device, mount_point});
+			prom_gauge_set(cpds_node_fs_available_bytes, available, (const char *[]){device, mount_point});
 		}
 	}
 	return 0;
