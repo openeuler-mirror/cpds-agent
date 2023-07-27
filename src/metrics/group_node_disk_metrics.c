@@ -110,13 +110,13 @@ static int update_node_blk_metrics()
 		char *name = cJSON_GetStringValue(cJSON_GetObjectItem(j_dev, "name"));
 		char *type = cJSON_GetStringValue(cJSON_GetObjectItem(j_dev, "type"));
 		char *mountpoint = cJSON_GetStringValue(cJSON_GetObjectItem(j_dev, "mountpoint"));
-		int val = -1;
+		double val = -1;
 		cJSON *j_val = cJSON_GetObjectItem(j_dev, "size");
 		if (j_val == NULL || !cJSON_IsNumber(j_val)) {
 			CPDS_LOG_ERROR("get '%s' size fail", name);
 			continue;
 		}
-		val = j_val->valueint;
+		val = j_val->valuedouble;
 		prom_gauge_set(cpds_node_blk_total_bytes, val, (const char *[]){name, type, mountpoint});
 	}
 
