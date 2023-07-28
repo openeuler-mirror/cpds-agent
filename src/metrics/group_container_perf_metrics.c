@@ -46,6 +46,8 @@ static void group_container_perf_destroy()
 
 static void group_container_perf_update()
 {
+	GList *plist = get_container_perf_info_list();
+
 	prom_counter_clear(cpds_container_alloc_memory_fail_cnt_total);
 	prom_counter_clear(cpds_container_alloc_memory_time_seconds_total);
 	prom_counter_clear(cpds_container_alloc_memory_bytes_total);
@@ -53,7 +55,6 @@ static void group_container_perf_update()
 	prom_counter_clear(cpds_container_create_process_fail_cnt_total);
 	prom_counter_clear(cpds_container_create_thread_fail_cnt_total);
 
-	GList *plist = get_container_perf_info_list();
 	GList *iter = plist;
 	while (iter != NULL) {
 		ctn_perf_metric *cpm = iter->data;

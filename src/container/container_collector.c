@@ -418,6 +418,20 @@ out:
 		fclose(fp);
 }
 
+static GList *clear_list(GList *plist)
+{
+	GList *iter = plist;
+	while (iter != NULL) {
+		if (iter->data) {
+			g_free(iter->data);
+			iter->data = NULL;
+		}
+		plist = g_list_delete_link(plist, iter);
+		iter = plist;
+	}
+	return plist;
+}
+
 #define RESET_STRING(_old, _new)                            \
 	if (_old == NULL)                                       \
 		_old = g_strdup(_new);                              \
@@ -466,6 +480,12 @@ static void fill_container_info(char *cid, container_info_t *info)
 		get_perf_stat(info->pid, &info->perf_stat);
 		info->net_dev_stat_list = fill_net_dev_stat_list(info->pid, info->net_dev_stat_list);
 		info->process_stat_list = fill_process_stat_list(info->pid, info->process_stat_list);
+	} else {
+		info->memory_stat.usage = 0;
+		info->memory_stat.swap_usage = 0;
+		info->memory_stat.cached = 0;
+		info->net_dev_stat_list = clear_list(info->net_dev_stat_list);
+		info->process_stat_list = clear_list(info->process_stat_list);
 	}
 
 out:

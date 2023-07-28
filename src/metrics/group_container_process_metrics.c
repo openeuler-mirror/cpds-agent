@@ -31,9 +31,10 @@ static void group_container_process_destroy()
 
 static void group_container_process_update()
 {
+	GList *plist = get_container_process_info_list();
+
 	prom_gauge_clear(cpds_container_sub_process_info);
 
-	GList *plist = get_container_process_info_list();
 	GList *iter = plist;
 	while (iter != NULL) {
 		ctn_process_metric *cpm = iter->data;

@@ -31,9 +31,10 @@ static void group_container_basic_destroy()
 
 static void group_container_basic_update()
 {
+	GList *plist = get_container_basic_info_list();
+
 	prom_gauge_clear(cpds_container_state);
 
-	GList *plist = get_container_basic_info_list();
 	GList *iter = plist;
 	while (iter != NULL) {
 		ctn_basic_metric *cbm = iter->data;
