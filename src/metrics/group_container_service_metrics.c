@@ -26,6 +26,7 @@ static prom_gauge_t *cpds_container_service_kube_controller_manager_status;
 static prom_gauge_t *cpds_container_service_kube_scheduler_status;
 static prom_gauge_t *cpds_container_service_kube_proxy_status;
 static prom_gauge_t *cpds_container_service_kubelet_status;
+static prom_gauge_t *cpds_container_service_network_status;
 
 static void group_container_service_init()
 {
@@ -48,6 +49,8 @@ static void group_container_service_init()
 	grp->metrics = g_list_append(grp->metrics, cpds_container_service_kube_proxy_status);
 	cpds_container_service_kubelet_status = prom_gauge_new("cpds_container_service_kubelet_status", "kubelet service status", 0, NULL);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_service_kubelet_status);
+	cpds_container_service_network_status = prom_gauge_new("cpds_container_service_network_status", "network service status", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_service_network_status);
 }
 
 static void group_container_service_destroy()
@@ -139,4 +142,5 @@ static void group_container_service_update()
 	UPDATE_SERVICE_METRICS(kube_scheduler, "kube-scheduler.service");
 	UPDATE_SERVICE_METRICS(kube_proxy, "kube-proxy.service");
 	UPDATE_SERVICE_METRICS(kubelet, "kubelet.service");
+	UPDATE_SERVICE_METRICS(network, "networking.service");
 }
