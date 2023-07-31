@@ -29,10 +29,8 @@ static void group_container_process_destroy()
 		g_list_free(group_container_process.metrics);
 }
 
-static void group_container_process_update()
+static void update_container_process_info(GList *plist)
 {
-	GList *plist = get_container_process_info_list();
-
 	prom_gauge_clear(cpds_container_sub_process_info);
 
 	GList *iter = plist;
@@ -45,12 +43,13 @@ static void group_container_process_update()
 			g_snprintf(str_pid, sizeof(str_pid), "%d", cspsm->pid);
 			const char *str_zombie = cspsm->zombie_flag == 1 ? "true" : "false";
 			prom_gauge_set(cpds_container_sub_process_info, 1, (const char *[]){cpm->cid, str_pid, str_zombie});
-			g_free(cspsm);
-			cpm->ctn_sub_process_stat_list = g_list_delete_link(cpm->ctn_sub_process_stat_list, sub_iter);
-			sub_iter = cpm->ctn_sub_process_stat_list;
+			sub_iter = sub_iter->next;
 		}
-		g_free(cpm);
-		plist = g_list_delete_link(plist, iter);
-		iter = plist;
+		iter = iter->next;
 	}
+}
+
+static void group_container_process_update()
+{
+	get_ctn_process_metric(update_container_process_info);
 }

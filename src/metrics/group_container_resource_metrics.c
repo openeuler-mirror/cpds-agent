@@ -29,6 +29,9 @@ static prom_gauge_t *cpds_container_cpu_usage_seconds_total;
 static prom_gauge_t *cpds_container_disk_usage_bytes;
 static prom_gauge_t *cpds_container_disk_iodelay_total;
 
+// network related metrics
+static prom_gauge_t *cpds_container_icmp_out_type8_total;
+static prom_gauge_t *cpds_container_icmp_in_type0_total;
 static prom_counter_t *cpds_container_network_receive_bytes_total;
 static prom_counter_t *cpds_container_network_receive_drop_total;
 static prom_counter_t *cpds_container_network_receive_errors_total;
@@ -63,6 +66,10 @@ static void group_container_resource_init()
 	cpds_container_disk_iodelay_total = prom_gauge_new("cpds_container_disk_iodelay_total", "container disk iodelay in ticks", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_disk_iodelay_total);
 	
+	cpds_container_icmp_out_type8_total = prom_gauge_new("cpds_container_icmp_out_type8_total", "container icmp OutType8 total", label_count, labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_icmp_out_type8_total);
+	cpds_container_icmp_in_type0_total = prom_gauge_new("cpds_container_icmp_in_type0_total", "container icmp InType0 total", label_count, labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_icmp_in_type0_total);
 	
 	const char *net_labels[] = {"container", "interface"};
 	size_t net_label_count = sizeof(net_labels) / sizeof(net_labels[0]);
@@ -90,10 +97,8 @@ static void group_container_resource_destroy()
 		g_list_free(group_container_resource.metrics);
 }
 
-static void group_container_resource_update()
+static void update_container_resource_info(GList *plist)
 {
-	GList *plist = get_container_resource_info_list();
-
 	prom_gauge_clear(cpds_container_memory_total_bytes);
 	prom_gauge_clear(cpds_container_memory_usage_bytes);
 	prom_gauge_clear(cpds_container_memory_swap_total_bytes);
@@ -102,6 +107,8 @@ static void group_container_resource_update()
 	prom_gauge_clear(cpds_container_cpu_usage_seconds_total);
 	prom_gauge_clear(cpds_container_disk_usage_bytes);
 	prom_gauge_clear(cpds_container_disk_iodelay_total);
+	prom_gauge_clear(cpds_container_icmp_out_type8_total);
+	prom_gauge_clear(cpds_container_icmp_in_type0_total);
 	prom_counter_clear(cpds_container_network_receive_bytes_total);
 	prom_counter_clear(cpds_container_network_receive_drop_total);
 	prom_counter_clear(cpds_container_network_receive_errors_total);
@@ -123,6 +130,9 @@ static void group_container_resource_update()
 		prom_gauge_set(cpds_container_disk_usage_bytes, crm->disk_usage_bytes, (const char *[]){crm->cid});
 		prom_gauge_set(cpds_container_disk_iodelay_total, crm->disk_iodelay, (const char *[]){crm->cid});
 
+		prom_gauge_set(cpds_container_icmp_out_type8_total, crm->ctn_net_snmp_stat.network_icmp_out_type8_total, (const char *[]){crm->cid});
+		prom_gauge_set(cpds_container_icmp_in_type0_total, crm->ctn_net_snmp_stat.network_icmp_in_type0_total, (const char *[]){crm->cid});
+	
 		GList *sub_iter = crm->ctn_net_dev_stat_list;
 		while (sub_iter != NULL) {
 			ctn_net_dev_stat_metric *cndsm = sub_iter->data;
@@ -134,15 +144,13 @@ static void group_container_resource_update()
 			prom_counter_set(cpds_container_network_transmit_drop_total, cndsm->network_transmit_drop_total, (const char *[]){crm->cid, cndsm->ifname});
 			prom_counter_set(cpds_container_network_transmit_errors_total, cndsm->network_transmit_errors_total, (const char *[]){crm->cid, cndsm->ifname});
 			prom_counter_set(cpds_container_network_transmit_packets_total, cndsm->network_transmit_packets_total, (const char *[]){crm->cid, cndsm->ifname});
-			g_free(cndsm->ifname);
-			g_free(cndsm);
-			crm->ctn_net_dev_stat_list = g_list_delete_link(crm->ctn_net_dev_stat_list, sub_iter);
-			sub_iter = crm->ctn_net_dev_stat_list;
+			sub_iter = sub_iter->next;
 		}
-
-		g_free(crm->cid);
-		g_free(crm);
-		plist = g_list_delete_link(plist, iter);
-		iter = plist;
+		iter = iter->next;
 	}
+}
+
+static void group_container_resource_update()
+{
+	get_ctn_resource_metric(update_container_resource_info);
 }

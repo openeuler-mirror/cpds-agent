@@ -29,10 +29,8 @@ static void group_container_basic_destroy()
 		g_list_free(group_container_basic.metrics);
 }
 
-static void group_container_basic_update()
+static void update_container_basic_info(GList *plist)
 {
-	GList *plist = get_container_basic_info_list();
-
 	prom_gauge_clear(cpds_container_state);
 
 	GList *iter = plist;
@@ -43,10 +41,11 @@ static void group_container_basic_update()
 		char str_exit_code[10] = {0};
 		g_snprintf(str_exit_code, sizeof(str_exit_code), "%d", cbm->exit_code);
 		prom_gauge_set(cpds_container_state, 1, (const char *[]){cbm->cid, str_pid, cbm->status, str_exit_code});
-		g_free(cbm->cid);
-		g_free(cbm->status);
-		g_free(cbm);
-		plist = g_list_delete_link(plist, iter);
-		iter = plist;
+		iter = iter->next;
 	}
+}
+
+static void group_container_basic_update()
+{
+	get_ctn_basic_metric(update_container_basic_info);
 }

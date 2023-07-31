@@ -44,10 +44,8 @@ static void group_container_perf_destroy()
 		g_list_free(group_container_perf.metrics);
 }
 
-static void group_container_perf_update()
+static void update_container_perf_info(GList *plist)
 {
-	GList *plist = get_container_perf_info_list();
-
 	prom_counter_clear(cpds_container_alloc_memory_fail_cnt_total);
 	prom_counter_clear(cpds_container_alloc_memory_time_seconds_total);
 	prom_counter_clear(cpds_container_alloc_memory_bytes_total);
@@ -64,9 +62,11 @@ static void group_container_perf_update()
 		prom_counter_set(cpds_container_alloc_memory_count_total, cpm->total_mmap_count, (const char *[]){cpm->cid});
 		prom_counter_set(cpds_container_create_process_fail_cnt_total, cpm->total_create_process_fail_cnt, (const char *[]){cpm->cid});
 		prom_counter_set(cpds_container_create_thread_fail_cnt_total, cpm->total_create_thread_fail_cnt, (const char *[]){cpm->cid});
-		g_free(cpm->cid);
-		g_free(cpm);
-		plist = g_list_delete_link(plist, iter);
-		iter = plist;
+		iter = iter->next;
 	}
+}
+
+static void group_container_perf_update()
+{
+	get_ctn_perf_metric(update_container_perf_info);
 }

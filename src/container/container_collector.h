@@ -32,6 +32,11 @@ typedef struct _ctn_net_dev_stat_metric {
 	double network_transmit_packets_total;
 } ctn_net_dev_stat_metric;
 
+typedef struct _ctn_net_snmp_stat_metrics {
+	double network_icmp_out_type8_total;
+	double network_icmp_in_type0_total;
+}ctn_net_snmp_stat_metrics;
+
 typedef struct _ctn_resource_metrics {
 	char *cid; // 容器id
 	int pid;
@@ -43,6 +48,7 @@ typedef struct _ctn_resource_metrics {
 	double memory_swap_total_bytes;
 	double memory_swap_usage_bytes;
 	double memory_cached_bytes;
+	ctn_net_snmp_stat_metrics ctn_net_snmp_stat;
 	GList *ctn_net_dev_stat_list; // list of ctn_net_dev_stat_metric
 } ctn_resource_metric;
 
@@ -59,16 +65,18 @@ typedef struct _ctn_sub_process_metrics {
 int start_updating_container_info();
 int stop_updating_container_info();
 
-// 获取 ctn_basic_metric 列表
-GList *get_container_basic_info_list();
+typedef void (*PROC_CONTAINER_INFO_LIST)(GList *plist);
 
-// 获取 ctn_perf_metric 列表
-GList *get_container_perf_info_list();
+// 获取 ctn_basic_metric
+void get_ctn_basic_metric(PROC_CONTAINER_INFO_LIST proc);
 
-// 获取 ctn_resource_metric 列表
-GList *get_container_resource_info_list();
+// 获取 ctn_perf_metric
+void get_ctn_perf_metric(PROC_CONTAINER_INFO_LIST proc);
 
-// 获取 ctn_process_metric 列表
-GList *get_container_process_info_list();
+// 获取 ctn_resource_metric
+void get_ctn_resource_metric(PROC_CONTAINER_INFO_LIST proc);
+
+// 获取 ctn_process_metric
+void get_ctn_process_metric(PROC_CONTAINER_INFO_LIST proc);
 
 #endif
