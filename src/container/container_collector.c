@@ -47,19 +47,25 @@ typedef struct _delay_info {
 	unsigned long long delayacct_blkio_ticks;
 } delay_info_t;
 
+typedef struct _net_snmp_stat {
+	unsigned long long icmp_out_type8_total;
+	unsigned long long icmp_in_type0_total;
+} net_snmp_stat_t;
+
 typedef struct _container_info {
-	char *cid;                   // container id
-	int pid;                     // container main pid
-	char *status;                // container status
-	int exit_code;               // container exit code
-	unsigned long disk_usage;    // unit: bytes
-	unsigned long cpu_usage_ns;  // uint; ns
+	char *cid;                       // container id
+	int pid;                         // container main pid
+	char *status;                    // container status
+	int exit_code;                   // container exit code
+	unsigned long disk_usage;        // unit: bytes
+	unsigned long cpu_usage_ns;      // uint; ns
 	unsigned long long disk_iodelay; // unit: ticks
 	GHashTable *iodelay_map;         // map (tid, delay_info_t)
-	memory_stat_t memory_stat;   // memory related stats
-	perf_stat_t perf_stat;       // performance stats
-	GList *net_dev_stat_list;    // list of net_dev_stat_t
-	GList *process_stat_list;    // list of process_stat_t
+	memory_stat_t memory_stat;       // memory related stats
+	perf_stat_t perf_stat;           // performance stats
+	net_snmp_stat_t net_snmp_stat;   // snmp stats
+	GList *net_dev_stat_list;        // list of net_dev_stat_t
+	GList *process_stat_list;        // list of process_stat_t
 } container_info_t;
 
 static pthread_rwlock_t rwlock;
@@ -418,6 +424,57 @@ out:
 		fclose(fp);
 }
 
+void get_net_snmp_stat(int pid, net_snmp_stat_t *stat)
+{
+	FILE *fp = NULL;
+	char line[500];
+	char *file = NULL;
+
+	file = g_strdup_printf("/proc/%d/net/snmp", pid);
+	if (file == NULL) {
+		goto out;
+	}
+	fp = fopen(file, "r");
+	if (fp == NULL) {
+		goto out;
+	}
+
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		if (strncmp("IcmpMsg", line, 7) != 0)
+			continue;
+		int i = 0;
+		int num = 0;
+		int idx_InType0 = -1, idx_OutType8 = -1;
+		char **header_arr = g_strsplit(line, " ", -1);
+		num = g_strv_length(header_arr);
+		for (i = 0; i < num; i++) {
+			if (strncmp("InType0", header_arr[i], strlen("InType0")) == 0)
+				idx_InType0 = i;
+			else if (strncmp("OutType8", header_arr[i], strlen("OutType8")) == 0)
+				idx_OutType8 = i;
+		}
+		g_strfreev(header_arr);
+		if (idx_InType0 < 0 || idx_OutType8 < 0)
+			break;
+		// 值在下一行对应位置
+		if (fgets(line, sizeof(line), fp) == NULL)
+			break;
+		char **value_arr = g_strsplit(line, " ", -1);
+		num = g_strv_length(value_arr);
+		if (idx_InType0 < num)
+			stat->icmp_in_type0_total = g_ascii_strtod(value_arr[idx_InType0], NULL);
+		if (idx_OutType8 < num)
+			stat->icmp_out_type8_total = g_ascii_strtod(value_arr[idx_OutType8], NULL);
+		g_strfreev(value_arr);
+	}
+
+out:
+	if (file)
+		g_free(file);
+	if (fp)
+		fclose(fp);
+}
+
 static GList *clear_list(GList *plist)
 {
 	GList *iter = plist;
@@ -478,6 +535,7 @@ static void fill_container_info(char *cid, container_info_t *info)
 			get_disk_iodelay(ccgd.cgroup_blkio_dir, info);
 		}
 		get_perf_stat(info->pid, &info->perf_stat);
+		get_net_snmp_stat(info->pid, &info->net_snmp_stat);
 		info->net_dev_stat_list = fill_net_dev_stat_list(info->pid, info->net_dev_stat_list);
 		info->process_stat_list = fill_process_stat_list(info->pid, info->process_stat_list);
 	} else {
@@ -558,11 +616,282 @@ void dump_container_info()
 	}
 }
 
-static void do_update_info()
+static GList *container_basic_info_list = NULL;
+
+static void cache_container_basic_info_list()
+{
+	GHashTableIter iter;
+	gpointer key, value;
+
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+
+	// clear
+	GList *ls = container_basic_info_list;
+	while (ls != NULL) {
+		ctn_basic_metric *cbm = ls->data;
+		g_free(cbm->cid);
+		g_free(cbm->status);
+		g_free(cbm);
+		container_basic_info_list = g_list_delete_link(container_basic_info_list, ls);
+		ls = container_basic_info_list;
+	}
+
+	if (cmap == NULL)
+		goto out;
+
+	g_hash_table_iter_init(&iter, cmap);
+	while (g_hash_table_iter_next(&iter, &key, &value)) {
+		container_info_t *cinfo = (container_info_t *)value;
+		ctn_basic_metric *cbm = g_malloc0(sizeof(ctn_basic_metric));
+		if (cbm == NULL) {
+			CPDS_LOG_ERROR("Failed to allocate memory");
+			goto out;
+		}
+		cbm->cid = g_strdup(cinfo->cid);
+		cbm->pid = cinfo->pid;
+		cbm->status = g_strdup(cinfo->status);
+		cbm->exit_code = cinfo->exit_code;
+		container_basic_info_list = g_list_append(container_basic_info_list, cbm);
+	}
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+void get_ctn_basic_metric(PROC_CONTAINER_INFO_LIST proc)
 {
 	if (pthread_rwlock_wrlock(&rwlock) != 0)
 		goto out;
 
+	proc(container_basic_info_list);
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+GList *container_perf_info_list = NULL;
+
+static void cache_container_perf_info_list()
+{
+	GList *plist = NULL;
+	GHashTableIter iter;
+	gpointer key, value;
+
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+	
+	// clear
+	GList *ls = container_perf_info_list;
+	while (ls != NULL) {
+		ctn_perf_metric *cpm = ls->data;
+		g_free(cpm->cid);
+		g_free(cpm);
+		container_perf_info_list = g_list_delete_link(container_perf_info_list, ls);
+		ls = container_perf_info_list;
+	}
+	
+	if (cmap == NULL)
+		goto out;
+
+	g_hash_table_iter_init(&iter, cmap);
+	while (g_hash_table_iter_next(&iter, &key, &value)) {
+		container_info_t *cinfo = (container_info_t *)value;
+		perf_stat_t *ps = &cinfo->perf_stat;
+		ctn_perf_metric *cpm = g_malloc0(sizeof(ctn_perf_metric));
+		if (cpm == NULL) {
+			CPDS_LOG_ERROR("Failed to allocate memory");
+			goto out;
+		}
+		cpm->cid = g_strdup(cinfo->cid);
+		cpm->total_create_process_fail_cnt = ps->total_create_process_fail_cnt;
+		cpm->total_create_thread_fail_cnt = ps->total_create_thread_fail_cnt;
+		cpm->total_mmap_count = ps->total_mmap_count;
+		cpm->total_mmap_fail_count = ps->total_mmap_fail_count;
+		cpm->total_mmap_size = ps->total_mmap_size;
+		cpm->total_mmap_time_seconds = (double)ps->total_mmap_time_ns / 1000000000;
+		plist = g_list_append(plist, cpm);
+	}
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+void get_ctn_perf_metric(PROC_CONTAINER_INFO_LIST proc)
+{
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+
+	proc(container_perf_info_list);
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+GList *container_resource_info_list = NULL;
+
+static void cache_container_resource_info_list()
+{
+	GHashTableIter iter;
+	gpointer key, value;
+
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+
+	// clear
+	GList *ls = container_resource_info_list;
+	while (ls != NULL) {
+		ctn_resource_metric *crm = ls->data;
+		GList *sub_iter = crm->ctn_net_dev_stat_list;
+		while (sub_iter != NULL) {
+			ctn_net_dev_stat_metric *cndsm = sub_iter->data;
+			g_free(cndsm->ifname);
+			g_free(cndsm);
+			crm->ctn_net_dev_stat_list = g_list_delete_link(crm->ctn_net_dev_stat_list, sub_iter);
+			sub_iter = crm->ctn_net_dev_stat_list;
+		}
+
+		g_free(crm->cid);
+		g_free(crm);
+		container_resource_info_list = g_list_delete_link(container_resource_info_list, ls);
+		ls = container_resource_info_list;
+	}
+
+	if (cmap == NULL)
+		goto out;
+
+	g_hash_table_iter_init(&iter, cmap);
+	while (g_hash_table_iter_next(&iter, &key, &value)) {
+		container_info_t *cinfo = (container_info_t *)value;
+		ctn_resource_metric *crm = g_malloc0(sizeof(ctn_resource_metric));
+		if (crm == NULL) {
+			CPDS_LOG_ERROR("Failed to allocate memory");
+			goto out;
+		}
+		crm->cid = g_strdup(cinfo->cid);
+		crm->pid = cinfo->pid;
+		crm->cpu_usage_seconds = (double)cinfo->cpu_usage_ns / 1000000000;
+		crm->disk_usage_bytes = cinfo->disk_usage;
+		crm->disk_iodelay = cinfo->disk_iodelay;
+		crm->memory_total_bytes = cinfo->memory_stat.total;
+		crm->memory_usage_bytes = cinfo->memory_stat.usage;
+		crm->memory_swap_total_bytes = cinfo->memory_stat.swap_total;
+		crm->memory_swap_usage_bytes = cinfo->memory_stat.swap_usage;
+		crm->memory_cached_bytes = cinfo->memory_stat.cached;
+
+		crm->ctn_net_snmp_stat.network_icmp_out_type8_total = cinfo->net_snmp_stat.icmp_out_type8_total;
+		crm->ctn_net_snmp_stat.network_icmp_in_type0_total = cinfo->net_snmp_stat.icmp_in_type0_total;
+
+		crm->ctn_net_dev_stat_list = NULL;
+		for (GList *ls = g_list_first(cinfo->net_dev_stat_list); ls != NULL; ls = g_list_next(ls)) {
+			net_dev_stat_t *nds = ls->data;
+			ctn_net_dev_stat_metric *cndsm = g_malloc0(sizeof(ctn_net_dev_stat_metric));
+			if (cndsm == NULL) {
+				CPDS_LOG_ERROR("Failed to allocate memory");
+				goto out;
+			}
+			cndsm->ifname = g_strdup(nds->ifname);
+			cndsm->network_receive_bytes_total = nds->r_bytes;
+			cndsm->network_receive_drop_total = nds->r_drop;
+			cndsm->network_receive_errors_total = nds->r_errs;
+			cndsm->network_receive_packets_total = nds->r_packets;
+			cndsm->network_transmit_bytes_total = nds->t_bytes;
+			cndsm->network_transmit_drop_total = nds->t_drop;
+			cndsm->network_transmit_errors_total = nds->t_errs;
+			cndsm->network_transmit_packets_total = nds->t_packets;
+			crm->ctn_net_dev_stat_list = g_list_append(crm->ctn_net_dev_stat_list, cndsm);
+		}
+
+		container_resource_info_list = g_list_append(container_resource_info_list, crm);
+	}
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+void get_ctn_resource_metric(PROC_CONTAINER_INFO_LIST proc)
+{
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+	
+	proc(container_resource_info_list);
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}	
+
+GList *container_process_info_list = NULL;
+
+static void cache_container_process_info_list()
+{
+	GHashTableIter iter;
+	gpointer key, value;
+
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+
+	// clear
+	GList *ls = container_process_info_list;
+	while (ls != NULL) {
+		ctn_process_metric *cpm = ls->data;
+		GList *sub_iter = cpm->ctn_sub_process_stat_list;
+		while (sub_iter != NULL) {
+			ctn_sub_process_stat_metric *cspsm = sub_iter->data;
+			g_free(cspsm);
+			cpm->ctn_sub_process_stat_list = g_list_delete_link(cpm->ctn_sub_process_stat_list, sub_iter);
+			sub_iter = cpm->ctn_sub_process_stat_list;
+		}
+		g_free(cpm);
+		container_process_info_list = g_list_delete_link(container_process_info_list, ls);
+		ls = container_process_info_list;
+	}
+	
+	if (cmap == NULL)
+		goto out;
+
+	g_hash_table_iter_init(&iter, cmap);
+	while (g_hash_table_iter_next(&iter, &key, &value)) {
+		container_info_t *cinfo = (container_info_t *)value;
+		ctn_process_metric *cpm = g_malloc0(sizeof(ctn_process_metric));
+		if (cpm == NULL) {
+			CPDS_LOG_ERROR("Failed to allocate memory");
+			goto out;
+		}
+		cpm->cid = g_strdup(cinfo->cid);
+
+		cpm->ctn_sub_process_stat_list = NULL;
+		for (GList *ls = g_list_first(cinfo->process_stat_list); ls != NULL; ls = g_list_next(ls)) {
+			process_stat_t *ps = ls->data;
+			ctn_sub_process_stat_metric *cspsm = g_malloc0(sizeof(ctn_sub_process_stat_metric));
+			if (cspsm == NULL) {
+				CPDS_LOG_ERROR("Failed to allocate memory");
+				goto out;
+			}
+			cspsm->pid = ps->pid;
+			cspsm->zombie_flag = ps->zombie_flag;
+			cpm->ctn_sub_process_stat_list = g_list_append(cpm->ctn_sub_process_stat_list, cspsm);
+		}
+
+		container_process_info_list = g_list_append(container_process_info_list, cpm);
+	}
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+void get_ctn_process_metric(PROC_CONTAINER_INFO_LIST proc)
+{
+	if (pthread_rwlock_wrlock(&rwlock) != 0)
+		goto out;
+
+	proc(container_process_info_list);
+
+out:
+	pthread_rwlock_unlock(&rwlock);
+}
+
+static void do_update_info()
+{
 	// docker.service 服务不在线则不更新容器信息
 	gchar *docker_active = NULL;
 	if (g_spawn_command_line_sync("systemctl is-active docker.service", &docker_active, NULL, NULL, NULL) == FALSE) {
@@ -642,11 +971,16 @@ static void do_update_info()
 
 	// 更新eBPF监控表
 	do_update_bpf_monitor_map();
+	
+	cache_container_basic_info_list();
+	cache_container_perf_info_list();
+	cache_container_resource_info_list();
+	cache_container_process_info_list();
 
 	// dump_container_info();
 
 out:
-	pthread_rwlock_unlock(&rwlock);
+	return;
 }
 
 static void update_thread(void *arg)
@@ -748,174 +1082,4 @@ int stop_updating_container_info()
 	pthread_rwlock_destroy(&rwlock);
 
 	return 0;
-}
-
-GList *get_container_basic_info_list()
-{
-	GList *plist = NULL;
-	GHashTableIter iter;
-	gpointer key, value;
-
-	if (pthread_rwlock_wrlock(&rwlock) != 0)
-		goto out;
-
-	if (cmap == NULL)
-		goto out;
-
-	g_hash_table_iter_init(&iter, cmap);
-	while (g_hash_table_iter_next(&iter, &key, &value)) {
-		container_info_t *cinfo = (container_info_t *)value;
-		ctn_basic_metric *cbm = g_malloc0(sizeof(ctn_basic_metric));
-		if (cbm == NULL) {
-			CPDS_LOG_ERROR("Failed to allocate memory");
-			goto out;
-		}
-		cbm->cid = g_strdup(cinfo->cid);
-		cbm->pid = cinfo->pid;
-		cbm->status = g_strdup(cinfo->status);
-		cbm->exit_code = cinfo->exit_code;
-		plist = g_list_append(plist, cbm);
-	}
-
-out:
-	pthread_rwlock_unlock(&rwlock);
-	return plist;
-}
-
-GList *get_container_perf_info_list()
-{
-	GList *plist = NULL;
-	GHashTableIter iter;
-	gpointer key, value;
-
-	if (pthread_rwlock_wrlock(&rwlock) != 0)
-		goto out;
-
-	if (cmap == NULL)
-		goto out;
-
-	g_hash_table_iter_init(&iter, cmap);
-	while (g_hash_table_iter_next(&iter, &key, &value)) {
-		container_info_t *cinfo = (container_info_t *)value;
-		perf_stat_t *ps = &cinfo->perf_stat;
-		ctn_perf_metric *cpm = g_malloc0(sizeof(ctn_perf_metric));
-		if (cpm == NULL) {
-			CPDS_LOG_ERROR("Failed to allocate memory");
-			goto out;
-		}
-		cpm->cid = g_strdup(cinfo->cid);
-		cpm->total_create_process_fail_cnt = ps->total_create_process_fail_cnt;
-		cpm->total_create_thread_fail_cnt = ps->total_create_thread_fail_cnt;
-		cpm->total_mmap_count = ps->total_mmap_count;
-		cpm->total_mmap_fail_count = ps->total_mmap_fail_count;
-		cpm->total_mmap_size = ps->total_mmap_size;
-		cpm->total_mmap_time_seconds = (double)ps->total_mmap_time_ns / 1000000000;
-		plist = g_list_append(plist, cpm);
-	}
-
-out:
-	pthread_rwlock_unlock(&rwlock);
-	return plist;
-}
-
-GList *get_container_resource_info_list()
-{
-	GList *plist = NULL;
-	GHashTableIter iter;
-	gpointer key, value;
-
-	if (pthread_rwlock_wrlock(&rwlock) != 0)
-		goto out;
-
-	if (cmap == NULL)
-		goto out;
-
-	g_hash_table_iter_init(&iter, cmap);
-	while (g_hash_table_iter_next(&iter, &key, &value)) {
-		container_info_t *cinfo = (container_info_t *)value;
-		ctn_resource_metric *crm = g_malloc0(sizeof(ctn_resource_metric));
-		if (crm == NULL) {
-			CPDS_LOG_ERROR("Failed to allocate memory");
-			goto out;
-		}
-		crm->cid = g_strdup(cinfo->cid);
-		crm->pid = cinfo->pid;
-		crm->cpu_usage_seconds = (double)cinfo->cpu_usage_ns / 1000000000;
-		crm->disk_usage_bytes = cinfo->disk_usage;
-		crm->disk_iodelay = cinfo->disk_iodelay;
-		crm->memory_total_bytes = cinfo->memory_stat.total;
-		crm->memory_usage_bytes = cinfo->memory_stat.usage;
-		crm->memory_swap_total_bytes = cinfo->memory_stat.swap_total;
-		crm->memory_swap_usage_bytes = cinfo->memory_stat.swap_usage;
-		crm->memory_cached_bytes = cinfo->memory_stat.cached;
-
-		crm->ctn_net_dev_stat_list = NULL;
-		for (GList *ls = g_list_first(cinfo->net_dev_stat_list); ls != NULL; ls = g_list_next(ls)) {
-			net_dev_stat_t *nds = ls->data;
-			ctn_net_dev_stat_metric *cndsm = g_malloc0(sizeof(ctn_net_dev_stat_metric));
-			if (cndsm == NULL) {
-				CPDS_LOG_ERROR("Failed to allocate memory");
-				goto out;
-			}
-			cndsm->ifname = g_strdup(nds->ifname);
-			cndsm->network_receive_bytes_total = nds->r_bytes;
-			cndsm->network_receive_drop_total = nds->r_drop;
-			cndsm->network_receive_errors_total = nds->r_errs;
-			cndsm->network_receive_packets_total = nds->r_packets;
-			cndsm->network_transmit_bytes_total = nds->t_bytes;
-			cndsm->network_transmit_drop_total = nds->t_drop;
-			cndsm->network_transmit_errors_total = nds->t_errs;
-			cndsm->network_transmit_packets_total = nds->t_packets;
-			crm->ctn_net_dev_stat_list = g_list_append(crm->ctn_net_dev_stat_list, cndsm);
-		}
-
-		plist = g_list_append(plist, crm);
-	}
-
-out:
-	pthread_rwlock_unlock(&rwlock);
-	return plist;
-}
-
-GList *get_container_process_info_list()
-{
-	GList *plist = NULL;
-	GHashTableIter iter;
-	gpointer key, value;
-
-	if (pthread_rwlock_wrlock(&rwlock) != 0)
-		goto out;
-
-	if (cmap == NULL)
-		goto out;
-
-	g_hash_table_iter_init(&iter, cmap);
-	while (g_hash_table_iter_next(&iter, &key, &value)) {
-		container_info_t *cinfo = (container_info_t *)value;
-		ctn_process_metric *cpm = g_malloc0(sizeof(ctn_process_metric));
-		if (cpm == NULL) {
-			CPDS_LOG_ERROR("Failed to allocate memory");
-			goto out;
-		}
-		cpm->cid = g_strdup(cinfo->cid);
-
-		cpm->ctn_sub_process_stat_list = NULL;
-		for (GList *ls = g_list_first(cinfo->process_stat_list); ls != NULL; ls = g_list_next(ls)) {
-			process_stat_t *ps = ls->data;
-			ctn_sub_process_stat_metric *cspsm = g_malloc0(sizeof(ctn_sub_process_stat_metric));
-			if (cspsm == NULL) {
-				CPDS_LOG_ERROR("Failed to allocate memory");
-				goto out;
-			}
-			cspsm->pid = ps->pid;
-			cspsm->zombie_flag = ps->zombie_flag;
-			cpm->ctn_sub_process_stat_list = g_list_append(cpm->ctn_sub_process_stat_list, cspsm);
-		}
-
-		plist = g_list_append(plist, cpm);
-	}
-
-out:
-	pthread_rwlock_unlock(&rwlock);
-	return plist;
 }
