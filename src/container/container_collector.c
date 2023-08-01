@@ -57,6 +57,7 @@ typedef struct _container_info {
 	int pid;                         // container main pid
 	char *status;                    // container status
 	int exit_code;                   // container exit code
+	char *network_mode;                // container network mode
 	unsigned long disk_usage;        // unit: bytes
 	unsigned long cpu_usage_ns;      // uint; ns
 	unsigned long long disk_iodelay; // unit: ticks
@@ -509,16 +510,16 @@ static void fill_container_info(char *cid, container_info_t *info)
 	gchar **cmd_ret_array = NULL;
 
 	// 使用 docker inspect 获取信息
-	cmd = g_strdup_printf("docker inspect --format \"{{.State.Pid}} {{.State.Status}} {{.State.ExitCode}}\" %s", cid);
+	cmd = g_strdup_printf("docker inspect --format \"{{.State.Pid}} {{.State.Status}} {{.State.ExitCode}} {{.HostConfig.NetworkMode}}\" %s", cid);
 	if (g_spawn_command_line_sync(cmd, &cmd_ret_str, NULL, NULL, NULL) == FALSE) {
-		CPDS_LOG_ERROR("Failed to exe docker inspect");
+		CPDS_LOG_WARN("Failed to exe docker inspect");
 		goto out;
 	}
 	g_strstrip(cmd_ret_str);
 
 	cmd_ret_array = g_strsplit(cmd_ret_str, " ", -1);
-	if (g_strv_length(cmd_ret_array) < 3) {
-		CPDS_LOG_ERROR("Failed to parse docker inspect");
+	if (g_strv_length(cmd_ret_array) < 4) {
+		CPDS_LOG_WARN("Failed to parse docker inspect");
 		goto out;
 	}
 
@@ -526,6 +527,8 @@ static void fill_container_info(char *cid, container_info_t *info)
 	info->pid = (int)g_ascii_strtoll(cmd_ret_array[0], NULL, 10);
 	RESET_STRING(info->status, cmd_ret_array[1]);
 	info->exit_code = (int)g_ascii_strtoll(cmd_ret_array[2], NULL, 10);
+	RESET_STRING(info->network_mode, cmd_ret_array[3]);
+
 	// 以下统计信息在容器运行起来（进程pid有效）时才有意义
 	if (info->pid > 0) {
 		container_cgroup_dirs ccgd = {0};
@@ -752,6 +755,7 @@ static void cache_container_resource_info_list()
 		}
 
 		g_free(crm->cid);
+		g_free(crm->network_mode);
 		g_free(crm);
 		container_resource_info_list = g_list_delete_link(container_resource_info_list, ls);
 		ls = container_resource_info_list;
@@ -778,6 +782,8 @@ static void cache_container_resource_info_list()
 		crm->memory_swap_total_bytes = cinfo->memory_stat.swap_total;
 		crm->memory_swap_usage_bytes = cinfo->memory_stat.swap_usage;
 		crm->memory_cached_bytes = cinfo->memory_stat.cached;
+
+		crm->network_mode = g_strdup(cinfo->network_mode);
 
 		crm->ctn_net_snmp_stat.network_icmp_out_type8_total = cinfo->net_snmp_stat.icmp_out_type8_total;
 		crm->ctn_net_snmp_stat.network_icmp_in_type0_total = cinfo->net_snmp_stat.icmp_in_type0_total;
@@ -1009,6 +1015,10 @@ static void cmap_value_destroy(gpointer data)
 		if (info->status) {
 			g_free(info->status);
 			info->status = NULL;
+		}
+		if (info->network_mode) {
+			g_free(info->network_mode);
+			info->network_mode = NULL;
 		}
 		if (info->net_dev_stat_list) {
 			for (GList *ls = g_list_first(info->net_dev_stat_list); ls != NULL; ls = g_list_next(ls)) {

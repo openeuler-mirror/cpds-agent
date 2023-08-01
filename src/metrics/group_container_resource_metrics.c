@@ -71,7 +71,7 @@ static void group_container_resource_init()
 	cpds_container_icmp_in_type0_total = prom_gauge_new("cpds_container_icmp_in_type0_total", "container icmp InType0 total", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_icmp_in_type0_total);
 	
-	const char *net_labels[] = {"container", "interface"};
+	const char *net_labels[] = {"container", "interface", "network_mode"};
 	size_t net_label_count = sizeof(net_labels) / sizeof(net_labels[0]);
 	cpds_container_network_receive_bytes_total = prom_counter_new("cpds_container_network_receive_bytes_total", "total bytes containter net interface received", net_label_count, net_labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_network_receive_bytes_total);
@@ -132,18 +132,26 @@ static void update_container_resource_info(GList *plist)
 
 		prom_gauge_set(cpds_container_icmp_out_type8_total, crm->ctn_net_snmp_stat.network_icmp_out_type8_total, (const char *[]){crm->cid});
 		prom_gauge_set(cpds_container_icmp_in_type0_total, crm->ctn_net_snmp_stat.network_icmp_in_type0_total, (const char *[]){crm->cid});
-	
+
 		GList *sub_iter = crm->ctn_net_dev_stat_list;
 		while (sub_iter != NULL) {
 			ctn_net_dev_stat_metric *cndsm = sub_iter->data;
-			prom_counter_set(cpds_container_network_receive_bytes_total, cndsm->network_receive_bytes_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_receive_drop_total, cndsm->network_receive_drop_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_receive_errors_total, cndsm->network_receive_errors_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_receive_packets_total, cndsm->network_receive_packets_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_transmit_bytes_total, cndsm->network_transmit_bytes_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_transmit_drop_total, cndsm->network_transmit_drop_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_transmit_errors_total, cndsm->network_transmit_errors_total, (const char *[]){crm->cid, cndsm->ifname});
-			prom_counter_set(cpds_container_network_transmit_packets_total, cndsm->network_transmit_packets_total, (const char *[]){crm->cid, cndsm->ifname});
+			prom_counter_set(cpds_container_network_receive_bytes_total, cndsm->network_receive_bytes_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_receive_drop_total, cndsm->network_receive_drop_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_receive_errors_total, cndsm->network_receive_errors_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_receive_packets_total, cndsm->network_receive_packets_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_transmit_bytes_total, cndsm->network_transmit_bytes_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_transmit_drop_total, cndsm->network_transmit_drop_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_transmit_errors_total, cndsm->network_transmit_errors_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
+			prom_counter_set(cpds_container_network_transmit_packets_total, cndsm->network_transmit_packets_total,
+			                 (const char *[]){crm->cid, cndsm->ifname, crm->network_mode});
 			sub_iter = sub_iter->next;
 		}
 		iter = iter->next;

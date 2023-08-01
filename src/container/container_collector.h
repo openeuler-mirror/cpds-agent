@@ -48,6 +48,7 @@ typedef struct _ctn_resource_metrics {
 	double memory_swap_total_bytes;
 	double memory_swap_usage_bytes;
 	double memory_cached_bytes;
+	char *network_mode;
 	ctn_net_snmp_stat_metrics ctn_net_snmp_stat;
 	GList *ctn_net_dev_stat_list; // list of ctn_net_dev_stat_metric
 } ctn_resource_metric;
