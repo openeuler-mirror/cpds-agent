@@ -677,7 +677,6 @@ GList *container_perf_info_list = NULL;
 
 static void cache_container_perf_info_list()
 {
-	GList *plist = NULL;
 	GHashTableIter iter;
 	gpointer key, value;
 
@@ -713,7 +712,7 @@ static void cache_container_perf_info_list()
 		cpm->total_mmap_fail_count = ps->total_mmap_fail_count;
 		cpm->total_mmap_size = ps->total_mmap_size;
 		cpm->total_mmap_time_seconds = (double)ps->total_mmap_time_ns / 1000000000;
-		plist = g_list_append(plist, cpm);
+		container_perf_info_list = g_list_append(container_perf_info_list, cpm);
 	}
 
 out:
