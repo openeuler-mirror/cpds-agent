@@ -20,8 +20,21 @@ cpds-agent是为CPDS(Container Problem Detect System)容器故障检测系统开
 * clang: 版本不低于10.0
 * bpftool
 * elfutils
+* libcurl
 * 内核版本 5.10 及以上
    * 需要开启内核选项 CONFIG_DEBUG_INFO_BTF=y
+
+对于`openEuler`系统(22.03 LTS 及其以上)，安装命令如下：
+``` shell
+dnf install -y cmake
+dnf install -y glib2-devel
+dnf install -y libmicrohttpd-devel
+dnf install -y systemd-devel
+dnf install -y clang
+dnf install -y bpftools
+dnf install -y elfutils-devel
+dnf install -y libcurl-devel.aarch64
+```
 
 下载cpds-agent并编译：
 ```

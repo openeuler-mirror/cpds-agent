@@ -121,6 +121,7 @@ target_link_libraries(${TARGET_BIN}
     pthread
     systemd
     elf
+    curl
     z
 )
 

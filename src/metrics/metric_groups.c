@@ -14,6 +14,7 @@ extern metric_group group_container_resource;
 extern metric_group group_container_perf;
 extern metric_group group_container_process;
 extern metric_group group_kernel_fault;
+extern metric_group group_pod_info;
 
 metric_group_list *init_metric_groups(metric_group_list *mgroups)
 {
@@ -31,5 +32,6 @@ metric_group_list *init_metric_groups(metric_group_list *mgroups)
 	mgroups = g_list_append(mgroups, &group_container_perf);
 	mgroups = g_list_append(mgroups, &group_container_process);
 	mgroups = g_list_append(mgroups, &group_kernel_fault);
+	mgroups = g_list_append(mgroups, &group_pod_info);
 	return mgroups;
 }
