@@ -205,6 +205,7 @@ static void get_memory_stat(const char *cgroup_memory_dir, memory_stat_t *ms)
 		}
 	}
 
+	unsigned long inactive_file_value = 0;
 	char *cg_memory_stat = NULL;
 	g_snprintf(cgfile, sizeof(cgfile), "%s/memory.stat", cgroup_memory_dir);
 	if (g_file_get_contents(cgfile, &cg_memory_stat, NULL, NULL) == TRUE) {
@@ -216,6 +217,8 @@ static void get_memory_stat(const char *cgroup_memory_dir, memory_stat_t *ms)
 		int str_total_swap_len = strlen(str_total_swap);
 		const char *str_total_cache = "total_cache";
 		int str_total_cache_len = strlen(str_total_cache);
+		const char *str_inactive_file = "inactive_file";
+		int str_inactive_file_len = strlen(str_inactive_file);
 		for (int i = 0; i < num; i++) {
 			if (g_ascii_strncasecmp(str_total_swap, stat_arr[i], str_total_swap_len) == 0) {
 				ms->swap_usage = g_ascii_strtoull(stat_arr[i] + str_total_swap_len, NULL, 10);
@@ -223,9 +226,14 @@ static void get_memory_stat(const char *cgroup_memory_dir, memory_stat_t *ms)
 			if (g_ascii_strncasecmp(str_total_cache, stat_arr[i], str_total_cache_len) == 0) {
 				ms->cached = g_ascii_strtoull(stat_arr[i] + str_total_cache_len, NULL, 10);
 			}
+			if (g_ascii_strncasecmp(str_inactive_file, stat_arr[i], str_inactive_file_len) == 0) {
+				inactive_file_value = g_ascii_strtoull(stat_arr[i] + str_inactive_file_len, NULL, 10);
+			}
 		}
 		g_strfreev(stat_arr);
 	}
+
+	ms->usage = ms->usage - inactive_file_value;
 }
 
 static GList *fill_net_dev_stat_list(int pid, GList *plist)
