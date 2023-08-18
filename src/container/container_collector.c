@@ -1,6 +1,7 @@
 #include "container_collector.h"
 #include "bpf_stat.h"
 #include "logger.h"
+#include "ping.h"
 
 #include <glib.h>
 #include <sys/sysinfo.h>
@@ -52,12 +53,21 @@ typedef struct _net_snmp_stat {
 	unsigned long long icmp_in_type0_total;
 } net_snmp_stat_t;
 
+typedef struct _ping_stat {
+	int tag;      // 注册用标识
+	int send_cnt; // 发送次数
+	int recv_cnt; // 接收次数
+	double rtt;   // 往返时间(s)
+} ping_stat_t;
+
 typedef struct _container_info {
 	char *cid;                       // container id
 	int pid;                         // container main pid
 	char *status;                    // container status
 	int exit_code;                   // container exit code
-	char *network_mode;                // container network mode
+	char *network_mode;              // container network mode
+	char *ip_addr;                   // container ip address
+	ping_stat_t ping_stat;           // ping stats
 	unsigned long disk_usage;        // unit: bytes
 	unsigned long cpu_usage_ns;      // uint; ns
 	unsigned long long disk_iodelay; // unit: ticks
@@ -498,6 +508,36 @@ static GList *clear_list(GList *plist)
 		_old = g_strdup(_new);                              \
 	}
 
+static void update_ping_stat(container_info_t *info, const char *ip_addr)
+{
+	if (ip_addr == NULL)
+		return;
+	if (info->ping_stat.tag == 0) {
+		// 新增 ping 监控
+		RESET_STRING(info->ip_addr, ip_addr);
+		info->ping_stat.tag = gen_ping_tag();
+		register_ping_item(info->ping_stat.tag, info->ip_addr);
+		CPDS_LOG_DEBUG("tag=%d, ip_addr=%s", info->ping_stat.tag, info->ip_addr);
+	} else {
+		if (g_strcmp0(info->ip_addr, ip_addr) != 0) {
+			// ip 发生了改变
+			CPDS_LOG_DEBUG("chaged ip_addr %s->%s", info->ip_addr, ip_addr);
+			RESET_STRING(info->ip_addr, ip_addr);
+			if (info->ping_stat.tag > 0)
+				unregister_ping_item(info->ping_stat.tag);
+			info->ping_stat.tag = gen_ping_tag();
+			register_ping_item(info->ping_stat.tag, info->ip_addr);
+			CPDS_LOG_DEBUG("tag=%d, ip_addr=%s", info->ping_stat.tag, info->ip_addr);
+		}
+	}
+	ping_info_t ping_info = {0};
+	if (get_ping_info(info->ping_stat.tag, &ping_info) == 0) {
+		info->ping_stat.send_cnt = ping_info.send_cnt;
+		info->ping_stat.recv_cnt = ping_info.recv_cnt;
+		info->ping_stat.rtt = ping_info.rtt;
+	}
+}
+
 static void fill_container_info(char *cid, container_info_t *info)
 {
 	if (cid == NULL || info == NULL) {
@@ -510,7 +550,8 @@ static void fill_container_info(char *cid, container_info_t *info)
 	gchar **cmd_ret_array = NULL;
 
 	// 使用 docker inspect 获取信息
-	cmd = g_strdup_printf("docker inspect --format \"{{.State.Pid}} {{.State.Status}} {{.State.ExitCode}} {{.HostConfig.NetworkMode}}\" %s", cid);
+	cmd = g_strdup_printf("docker inspect --format \"{{.State.Pid}} {{.State.Status}} {{.State.ExitCode}} "
+	                      "{{.HostConfig.NetworkMode}} {{.NetworkSettings.IPAddress}}\" %s", cid);
 	if (g_spawn_command_line_sync(cmd, &cmd_ret_str, NULL, NULL, NULL) == FALSE) {
 		CPDS_LOG_WARN("Failed to exe docker inspect");
 		goto out;
@@ -518,7 +559,8 @@ static void fill_container_info(char *cid, container_info_t *info)
 	g_strstrip(cmd_ret_str);
 
 	cmd_ret_array = g_strsplit(cmd_ret_str, " ", -1);
-	if (g_strv_length(cmd_ret_array) < 4) {
+	int arr_num = g_strv_length(cmd_ret_array);
+	if ( arr_num < 4) {
 		CPDS_LOG_WARN("Failed to parse docker inspect");
 		goto out;
 	}
@@ -531,6 +573,9 @@ static void fill_container_info(char *cid, container_info_t *info)
 
 	// 以下统计信息在容器运行起来（进程pid有效）时才有意义
 	if (info->pid > 0) {
+		if (arr_num >= 5) {
+			update_ping_stat(info, cmd_ret_array[4]);
+		}
 		container_cgroup_dirs ccgd = {0};
 		if (get_container_cgroup_dirs(info->pid, &ccgd) == 0) {
 			get_cpu_usage(ccgd.cgroup_cpu_dir, &info->cpu_usage_ns);
@@ -635,6 +680,7 @@ static void cache_container_basic_info_list()
 		ctn_basic_metric *cbm = ls->data;
 		g_free(cbm->cid);
 		g_free(cbm->status);
+		g_free(cbm->ip_addr);
 		g_free(cbm);
 		container_basic_info_list = g_list_delete_link(container_basic_info_list, ls);
 		ls = container_basic_info_list;
@@ -655,6 +701,7 @@ static void cache_container_basic_info_list()
 		cbm->pid = cinfo->pid;
 		cbm->status = g_strdup(cinfo->status);
 		cbm->exit_code = cinfo->exit_code;
+		cbm->ip_addr = g_strdup(cinfo->ip_addr);
 		container_basic_info_list = g_list_append(container_basic_info_list, cbm);
 	}
 
@@ -755,6 +802,7 @@ static void cache_container_resource_info_list()
 
 		g_free(crm->cid);
 		g_free(crm->network_mode);
+		g_free(crm->ip_addr);
 		g_free(crm);
 		container_resource_info_list = g_list_delete_link(container_resource_info_list, ls);
 		ls = container_resource_info_list;
@@ -783,9 +831,14 @@ static void cache_container_resource_info_list()
 		crm->memory_cached_bytes = cinfo->memory_stat.cached;
 
 		crm->network_mode = g_strdup(cinfo->network_mode);
+		crm->ip_addr = g_strdup(cinfo->ip_addr);
 
 		crm->ctn_net_snmp_stat.network_icmp_out_type8_total = cinfo->net_snmp_stat.icmp_out_type8_total;
 		crm->ctn_net_snmp_stat.network_icmp_in_type0_total = cinfo->net_snmp_stat.icmp_in_type0_total;
+
+		crm->ctn_ping_stat.send_cnt = cinfo->ping_stat.send_cnt;
+		crm->ctn_ping_stat.recv_cnt = cinfo->ping_stat.recv_cnt;
+		crm->ctn_ping_stat.rtt = cinfo->ping_stat.rtt;
 
 		crm->ctn_net_dev_stat_list = NULL;
 		for (GList *ls = g_list_first(cinfo->net_dev_stat_list); ls != NULL; ls = g_list_next(ls)) {
@@ -1018,6 +1071,13 @@ static void cmap_value_destroy(gpointer data)
 		if (info->network_mode) {
 			g_free(info->network_mode);
 			info->network_mode = NULL;
+		}
+		if (info->ping_stat.tag > 0) {
+			unregister_ping_item(info->ping_stat.tag);
+		}
+		if (info->ip_addr) {
+			g_free(info->ip_addr);
+			info->ip_addr = NULL;
 		}
 		if (info->net_dev_stat_list) {
 			for (GList *ls = g_list_first(info->net_dev_stat_list); ls != NULL; ls = g_list_next(ls)) {

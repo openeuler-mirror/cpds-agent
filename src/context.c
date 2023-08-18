@@ -4,6 +4,7 @@ agent_context global_ctx = {
 	.show_version = FALSE,
 	.config_file = NULL,
 	.log_cfg_file = NULL,
+	.net_diagnostic_dest = NULL,
 	.expose_port = 0
 };
 
@@ -17,5 +18,9 @@ void free_global_context()
 	if (ctx->log_cfg_file) {
 		g_free(ctx->log_cfg_file);
 		ctx->log_cfg_file = NULL;
+	}
+	if (ctx->net_diagnostic_dest) {
+		g_free(ctx->net_diagnostic_dest);
+		ctx->net_diagnostic_dest = NULL;
 	}
 }

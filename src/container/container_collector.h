@@ -8,6 +8,7 @@ typedef struct _ctn_basic_metric {
 	int pid;
 	char *status;
 	int exit_code;
+	char *ip_addr;
 } ctn_basic_metric;
 
 typedef struct _ctn_perf_stat_metric {
@@ -35,7 +36,13 @@ typedef struct _ctn_net_dev_stat_metric {
 typedef struct _ctn_net_snmp_stat_metrics {
 	double network_icmp_out_type8_total;
 	double network_icmp_in_type0_total;
-}ctn_net_snmp_stat_metrics;
+} ctn_net_snmp_stat_metrics;
+
+typedef struct _ctn_ping_stat_metrics {
+	double send_cnt; // 发送次数
+	double recv_cnt; // 接收次数
+	double rtt;      // 往返时间(s)
+} ctn_ping_stat_metrics;
 
 typedef struct _ctn_resource_metrics {
 	char *cid; // 容器id
@@ -49,6 +56,8 @@ typedef struct _ctn_resource_metrics {
 	double memory_swap_usage_bytes;
 	double memory_cached_bytes;
 	char *network_mode;
+	char *ip_addr;
+	ctn_ping_stat_metrics ctn_ping_stat;
 	ctn_net_snmp_stat_metrics ctn_net_snmp_stat;
 	GList *ctn_net_dev_stat_list; // list of ctn_net_dev_stat_metric
 } ctn_resource_metric;

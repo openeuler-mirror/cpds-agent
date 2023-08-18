@@ -85,6 +85,7 @@ target_compile_options(${TARGET_BIN}
 aux_source_directory("${PROJECT_SOURCE_DIR}/src" MAIN_SRCS)
 aux_source_directory("${PROJECT_SOURCE_DIR}/src/metrics" MAIN_SRCS)
 aux_source_directory("${PROJECT_SOURCE_DIR}/src/container" MAIN_SRCS)
+aux_source_directory("${PROJECT_SOURCE_DIR}/src/ping" MAIN_SRCS)
 aux_source_directory("${PROJECT_SOURCE_DIR}/json" JSON_SRCS)
 set(BPF_STAT_SRCS "${BPF_STAT_SRC_DIR}/bpf_stat.c")
 target_sources(${TARGET_BIN}
@@ -101,6 +102,7 @@ target_include_directories(${TARGET_BIN}
     "${PROJECT_SOURCE_DIR}/src/metrics"
     "${PROJECT_SOURCE_DIR}/src/bpf_stat"
     "${PROJECT_SOURCE_DIR}/src/container"
+    "${PROJECT_SOURCE_DIR}/src/ping"
     "${PROJECT_SOURCE_DIR}/prom/include"
     "${PROJECT_SOURCE_DIR}/promhttp/include"
     "${PROJECT_SOURCE_DIR}/json"

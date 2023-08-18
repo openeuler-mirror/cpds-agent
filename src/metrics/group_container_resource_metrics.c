@@ -41,6 +41,9 @@ static prom_counter_t *cpds_container_network_transmit_drop_total;
 static prom_counter_t *cpds_container_network_transmit_errors_total;
 static prom_counter_t *cpds_container_network_transmit_packets_total;
 
+static prom_counter_t *cpds_container_ping_send_count_total;
+static prom_counter_t *cpds_container_ping_recv_count_total;
+static prom_counter_t *cpds_container_ping_rtt_total;
 
 static void group_container_resource_init()
 {
@@ -70,7 +73,16 @@ static void group_container_resource_init()
 	grp->metrics = g_list_append(grp->metrics, cpds_container_icmp_out_type8_total);
 	cpds_container_icmp_in_type0_total = prom_gauge_new("cpds_container_icmp_in_type0_total", "container icmp InType0 total", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_icmp_in_type0_total);
-	
+
+	const char *ping_labels[] = {"container", "ip"};
+	size_t ping_label_count = sizeof(ping_labels) / sizeof(ping_labels[0]);
+	cpds_container_ping_send_count_total = prom_counter_new("cpds_container_ping_send_count_total", "totla ping sent count", ping_label_count, ping_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_ping_send_count_total);
+	cpds_container_ping_recv_count_total = prom_counter_new("cpds_container_ping_recv_count_total", "totla ping received count", ping_label_count, ping_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_ping_recv_count_total);
+	cpds_container_ping_rtt_total = prom_counter_new("cpds_container_ping_rtt_total", "totla ping round-trip time", ping_label_count, ping_labels);
+	grp->metrics = g_list_append(grp->metrics, cpds_container_ping_rtt_total);
+
 	const char *net_labels[] = {"container", "interface", "network_mode"};
 	size_t net_label_count = sizeof(net_labels) / sizeof(net_labels[0]);
 	cpds_container_network_receive_bytes_total = prom_counter_new("cpds_container_network_receive_bytes_total", "total bytes containter net interface received", net_label_count, net_labels);
@@ -117,6 +129,9 @@ static void update_container_resource_info(GList *plist)
 	prom_counter_clear(cpds_container_network_transmit_drop_total);
 	prom_counter_clear(cpds_container_network_transmit_errors_total);
 	prom_counter_clear(cpds_container_network_transmit_packets_total);
+	prom_counter_clear(cpds_container_ping_send_count_total);
+	prom_counter_clear(cpds_container_ping_recv_count_total);
+	prom_counter_clear(cpds_container_ping_rtt_total);
 
 	GList *iter = plist;
 	while (iter != NULL) {
@@ -132,6 +147,12 @@ static void update_container_resource_info(GList *plist)
 
 		prom_gauge_set(cpds_container_icmp_out_type8_total, crm->ctn_net_snmp_stat.network_icmp_out_type8_total, (const char *[]){crm->cid});
 		prom_gauge_set(cpds_container_icmp_in_type0_total, crm->ctn_net_snmp_stat.network_icmp_in_type0_total, (const char *[]){crm->cid});
+
+		if (crm->ctn_ping_stat.send_cnt > 0) {
+			prom_counter_set(cpds_container_ping_send_count_total, crm->ctn_ping_stat.send_cnt, (const char *[]){crm->cid, crm->ip_addr});
+			prom_counter_set(cpds_container_ping_recv_count_total, crm->ctn_ping_stat.recv_cnt, (const char *[]){crm->cid, crm->ip_addr});
+			prom_counter_set(cpds_container_ping_rtt_total, crm->ctn_ping_stat.rtt, (const char *[]){crm->cid, crm->ip_addr});
+		}
 
 		GList *sub_iter = crm->ctn_net_dev_stat_list;
 		while (sub_iter != NULL) {
