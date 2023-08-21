@@ -17,7 +17,7 @@ static prom_gauge_t *cpds_container_state;
 static void group_container_basic_init()
 {
 	metric_group *grp = &group_container_basic;
-	const char *labels[] = {"container", "pid", "state", "exit_code"};
+	const char *labels[] = {"container", "pid", "state", "exit_code", "ip"};
 	size_t label_count = sizeof(labels) / sizeof(labels[0]);
 	cpds_container_state = prom_gauge_new("cpds_container_state", "container basic", label_count, labels);
 	grp->metrics = g_list_append(grp->metrics, cpds_container_state);
@@ -40,7 +40,7 @@ static void update_container_basic_info(GList *plist)
 		g_snprintf(str_pid, sizeof(str_pid), "%d", cbm->pid);
 		char str_exit_code[10] = {0};
 		g_snprintf(str_exit_code, sizeof(str_exit_code), "%d", cbm->exit_code);
-		prom_gauge_set(cpds_container_state, 1, (const char *[]){cbm->cid, str_pid, cbm->status, str_exit_code});
+		prom_gauge_set(cpds_container_state, 1, (const char *[]){cbm->cid, str_pid, cbm->status, str_exit_code, cbm->ip_addr});
 		iter = iter->next;
 	}
 }

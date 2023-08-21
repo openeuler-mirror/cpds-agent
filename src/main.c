@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "registration.h"
 #include "web_service.h"
+#include "ping.h"
 
 #include <signal.h>
 #include <glib.h>
@@ -22,6 +23,12 @@ static int do_cpds_agent_service(agent_context *ctx)
 	int ret = -1;
 
 	CPDS_LOG_INFO("cpds-agent service started. port=%d", ctx->expose_port);
+	
+	ret = init_ping_svc();
+	if (ret != 0) {
+		CPDS_LOG_ERROR("Failed to init ping svc");
+		goto out;
+	}
 
 	if (init_default_prometheus_registry() != 0) {
 		CPDS_LOG_ERROR_PRINT("init premetheus registry error");
@@ -57,6 +64,7 @@ out:
 	stop_http_service();
 	destroy_default_prometheus_registry();
 	free_all_metrics();
+	destroy_ping_svc();
 
 	CPDS_LOG_INFO("cpds-agent service stopped");
 	

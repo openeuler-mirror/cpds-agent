@@ -45,6 +45,14 @@ int load_config(agent_context *ctx, const char *cfg_file)
 			ctx->expose_port = DEFAULT_EXPOSE_PORT;
 	}
 
+	char *temp_str = cJSON_GetStringValue(cJSON_GetObjectItem(cfg_json, "net_diagnostic_dest"));
+	if (temp_str != NULL) {
+		ctx->net_diagnostic_dest = g_strdup(temp_str);
+	} else {
+		ctx->net_diagnostic_dest = g_strdup(DEFAULT_NET_DIAGNOSTIC_DEST);
+		CPDS_LOG_INFO("Use DEFAULT_NET_DIAGNOSTIC_DEST %s", ctx->net_diagnostic_dest);
+	}
+
 	ret = 0;
 
 out:

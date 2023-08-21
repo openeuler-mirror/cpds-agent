@@ -1,6 +1,8 @@
 #include "logger.h"
 #include "metric_group_type.h"
 #include "prom.h"
+#include "ping.h"
+#include "context.h"
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -11,6 +13,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+static int ping_tag = 0;
 
 static void group_node_network_init();
 static void group_node_network_destroy();
@@ -36,6 +40,10 @@ static prom_counter_t *cpds_node_network_transmit_packets_total;
 
 static prom_counter_t *cpds_node_netstat_tcp_retrans_segs;
 static prom_counter_t *cpds_node_netstat_tcp_out_segs;
+
+static prom_counter_t *cpds_node_ping_send_count_total;
+static prom_counter_t *cpds_node_ping_recv_count_total;
+static prom_counter_t *cpds_node_ping_rtt_total;
 
 static void group_node_network_init()
 {
@@ -72,12 +80,23 @@ static void group_node_network_init()
 	grp->metrics = g_list_append(grp->metrics, cpds_node_netstat_tcp_retrans_segs);
 	cpds_node_netstat_tcp_out_segs = prom_counter_new("cpds_node_netstat_tcp_out_segs", "TCP Outgoing Segments", 0, NULL);
 	grp->metrics = g_list_append(grp->metrics, cpds_node_netstat_tcp_out_segs);
+
+	cpds_node_ping_send_count_total = prom_counter_new("cpds_node_ping_send_count_total", "totla ping sent count", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_ping_send_count_total);
+	cpds_node_ping_recv_count_total = prom_counter_new("cpds_node_ping_recv_count_total", "totla ping received count", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_ping_recv_count_total);
+	cpds_node_ping_rtt_total = prom_counter_new("cpds_node_ping_rtt_total", "totla ping round-trip time", 0, NULL);
+	grp->metrics = g_list_append(grp->metrics, cpds_node_ping_rtt_total);
+
+	ping_tag = gen_ping_tag();
+	register_ping_item(ping_tag, global_ctx.net_diagnostic_dest);
 }
 
 static void group_node_network_destroy()
 {
 	if (group_node_network.metrics)
 		g_list_free(group_node_network.metrics);
+	unregister_ping_item(ping_tag);
 }
 
 static void update_interface_info_metircs(const char *ifname)
@@ -244,8 +263,20 @@ out:
 		fclose(fp);
 }
 
+static void update_ping_metrics()
+{
+	ping_info_t info = {0};
+	int ret = get_ping_info(ping_tag, &info);
+	if (ret == 0) {
+		prom_counter_set(cpds_node_ping_send_count_total, info.send_cnt, NULL);
+		prom_counter_set(cpds_node_ping_recv_count_total, info.recv_cnt, NULL);
+		prom_counter_set(cpds_node_ping_rtt_total, info.rtt, NULL);
+	}
+}
+
 static void group_node_network_update()
 {
 	update_net_dev_metrics();
 	update_netstat_tcp_metrics();
+	update_ping_metrics();
 }
