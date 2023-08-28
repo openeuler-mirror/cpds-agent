@@ -172,8 +172,8 @@ static int send_ping(int tag, int seq, const char *hostname)
 	icmp_hdr = (struct icmphdr *)(sendbuf + ip_len); // 字符串指针
 	icmp_hdr->type = 8;                              // 初始化ICMP消息类型type
 	icmp_hdr->code = 0;                              // 初始化消息代码code
-	icmp_hdr->icmp_id = tag;                         // 把tag标识码赋值给icmp_id
-	icmp_hdr->icmp_seq = seq;                        // 发送的ICMP消息序号赋值给icmp序号
+	icmp_hdr->icmp_id = htons(tag);                  // 把tag标识码赋值给icmp_id
+	icmp_hdr->icmp_seq = htons(seq);                 // 发送的ICMP消息序号赋值给icmp序号
 
 	// icmp数据区赋值
 	memset(icmp_hdr->data, 0xff, datalen);
@@ -267,6 +267,11 @@ static int recv_ping(char *recv_buf, int recv_len, struct sockaddr_in *from)
 		return -1;
 	}
 
+	// 不是应答，忽略
+	if (icmp->type != 0) {
+		return 0;
+	}
+		
 	data = (struct icmpdata *)icmp->data;
 	tag = data->tag;
 
@@ -285,7 +290,7 @@ static int recv_ping(char *recv_buf, int recv_len, struct sockaddr_in *from)
 
 	// CPDS_LOG_DEBUG("<<< %d bytes from %s:icmp_seq=%u ttl=%d rtt=%.3f ms", ip_datalen, // IP数据长度
 	//                inet_ntoa(from->sin_addr),                                         // 目的ip地址
-	//                icmp->icmp_seq,                                                    // icmp报文序列号
+	//                ntohs(icmp->icmp_seq),                                             // icmp报文序列号
 	//                ip->ttl,                                                           // 生存时间
 	//                rtt * 1000);                                                       // 往返时间
 
