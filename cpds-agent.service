@@ -1,0 +1,10 @@
+[Unit]
+Description=cpds-agent Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/cpds-agent
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
